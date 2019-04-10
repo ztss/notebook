@@ -1,0 +1,7 @@
+1.windows消息拥有最多两个参数，wParam,1Param.wParam包含HIWORD,LOWORD.可以用PostMes
+  sage()和SendMessage()发送消息。
+2.#pragma warn Directive:这个指示用来隐藏编译时的警告，当我们设计大程序时，我们想要先
+  看到所有的error。语法
+  #pragma warn +xxx (To show the warning)
+  #pragma warn -xxx (To hide the warning)
+  #pragma warn .xxx (To toggle between hide and show)

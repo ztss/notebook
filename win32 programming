@@ -24,3 +24,7 @@
   #define StringReverse StringReverseA #endif // !UNICODE
 6.BOOL IsTextUnicode(CONST PVOID pvBuffer, int cb, PINT pResult);使用一系列的统计
   和确定性方法去猜测缓存区中的内容是否是Unicode。其中第三个参数指定了使用什么方法。
+7.内核对象是内核分配的一个内存块并且只被内核访问，这些内存块是一个数据结构，他们的成员有
+  这些对象的一些信息。其中有一些信息是所有内核对象都有的，另外一些就是特有的。内核对象的
+  使用计数由内核维护，显式有多少个进程使用这个内核对象，当这个计数为0的时候内核销毁这些
+  对象。

@@ -5,3 +5,5 @@
   #pragma warn +xxx (To show the warning)
   #pragma warn -xxx (To hide the warning)
   #pragma warn .xxx (To toggle between hide and show)
+3.为什么开发一个应用的时候我们应该尽量使用Unicode。有很多好处
+4.

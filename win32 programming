@@ -6,4 +6,21 @@
   #pragma warn -xxx (To hide the warning)
   #pragma warn .xxx (To toggle between hide and show)
 3.为什么开发一个应用的时候我们应该尽量使用Unicode。有很多好处
-4.
+4.int MultiByteToWideChar
+  ( UINT uCodePage, DWORD dwFlags,
+    PCSTR pMultiByteStr, int cbMultiByte, PWSTR pWideCharStr, int cchWideChar);
+  将多字节字符转换为宽字符。dwFlags通常不使用，默认为0。后两个为转换的字符串和它的长度。
+  pWideCharStr如果为-1，则函数自己决定原字符串的长度。后两个为转换后的宽字符串的地址和
+  需要的内存大小。
+  int WideCharToMultiByte( UINT uCodePage, DWORD dwFlags,
+  PCWSTR pWideCharStr, int cchWideChar, PSTR pMultiByteStr,
+  int cbMultiByte, PCSTR pDefaultChar, PBOOL pfUsedDefaultChar);将宽字符串转化为多
+  字节字符串。参数与上面的函数类似。
+5.使用上面两个函数可以很容易的实现一些函数的ANSI版本和UNICODE版本。
+  BOOL StringReverseW(PWSTR pWideCharStr, DWORD cchLength);
+  BOOL StringReverseA(PSTR pMultiByteStr, DWORD cchLength);
+  #ifdef UNICODE
+  #define StringReverse StringReverseW #else
+  #define StringReverse StringReverseA #endif // !UNICODE
+6.BOOL IsTextUnicode(CONST PVOID pvBuffer, int cb, PINT pResult);使用一系列的统计
+  和确定性方法去猜测缓存区中的内容是否是Unicode。其中第三个参数指定了使用什么方法。

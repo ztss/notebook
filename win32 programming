@@ -30,4 +30,15 @@
   对象。
 8.每一个进程都有一个内核对象句柄表。如果创建内核对象的函数失败了，就会返回0。当然也并不
   是绝对，比如说Createfile失败返回(INVALID_HANDLE_VALUE -1)。
-9.
+9.使用对象句柄继承
+  SECURITY_ATTRIBUTES sa; sa.nLength = sizeof(sa);
+  sa.lpSecurityDescriptor = NULL;
+  sa.bInheritHandle = TRUE; // Make the returned handle inheritable.
+  HANDLE hMutex = CreateMutex(&sa, FALSE, NULL);
+  然后由父进程创建一个子进程
+  BOOL CreateProcess( PCTSTR pszApplicationName, PTSTR pszCommandLine,
+  PSECURITY_ATTRIBUTES psaProcess, PSECURITY_ATTRIBUTES psaThread,
+  BOOL bInheritHandles, DWORD dwCreationFlags, PVOID pvEnvironment,
+  PCTSTR pszCurrentDirectory, LPSTARTUPINFO pStartupInfo,
+  PPROCESS_INFORMATION pProcessInformation);
+  bInheritHandles表示可继承父进程的内核对象句柄。

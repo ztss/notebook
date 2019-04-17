@@ -42,3 +42,21 @@
   PCTSTR pszCurrentDirectory, LPSTARTUPINFO pStartupInfo,
   PPROCESS_INFORMATION pProcessInformation);
   bInheritHandles表示可继承父进程的内核对象句柄。
+10.可以使用BOOL SetHandleInformation( HANDLE hObject, DWORD dwMask,
+   DWORD dwFlags);改变内核对象句柄的可继承标记。打开继承标志，如下
+   SetHandleInformation(hObj, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);关闭
+   SetHandleInformation(hObj, HANDLE_FLAG_INHERIT, 0);
+   BOOL GetHandleInformation( HANDLE hObject, PDWORD pdwFlags);会返回句柄的当前标
+   志。可以使用以下代码看看一个句柄是否可继承的。
+   DWORD dwFlags;
+   GetHandleInformation(hObj, &dwFlags);
+   BOOL fHandleIsInheritable = (0 != (dwFlags & HANDLE_FLAG_INHERIT));
+11.我们可以通过给一个对象命名来分享一个对象。比如我们创建一个内核对象
+   HANDLE hMutexProcessA = CreateMutex(NULL, FALSE, TEXT("JeffMutex"));
+   然后程序B也用相同的名字创建一个同类型的内核对象，那么就能在两个进程中共享这个对象。
+   HANDLE hMutexProcessB = CreateMutex(NULL, FALSE, TEXT("JeffMutex"));
+12.BOOL DuplicateHandle(
+   HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
+   HANDLE hTargetProcessHandle,
+   PHANDLE phTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle,
+   DWORD dwOptions);是另一种可以在不同进程间共享对象的方法。

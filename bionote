@@ -21,3 +21,13 @@
   上面的管道命令第一行以文件作为标准输入，第一行处理后的结果作为第二个程序的标准输入。
   其中|为管道符号。grep命令的格式如下
   grep [options] regularexpressionpattern [file].
+8.假设我们有两个程序，都会有standard error输出。我们需要用管道来运行两个程序，如下
+  program1 inputfile.txt 2> stderr.txt | program2 2> stderr.txt > outputfile.txt
+  这样我们可以分开的看两个程序error输出，而不会相互有干扰。
+9.假设我们需要使用管道来用一个程序处理另一个程序的standard error和standard output。即
+  一个程序的standard input为前一个程序的standard error和standard output。那么我们可
+  以使用
+  program1 inputfile.txt 2>&1 | grep "error"。2>&1即将两个输出结合在一起。
+10.我们也可以使用tee命令将一个程序的输出重定向到文件中，这是这个输出的一个copy，所以我
+   们还可以使用管道将输出作为另一个文件的输入。如下
+   program1 inputfile.txt | tee interfile.txt | program2 > outputfile.txt。

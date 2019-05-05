@@ -12,3 +12,12 @@
 5.使用tail可以查看一个文件的尾部，也可以使用数字控制看最后几行
   tail -number textname 也可以使用 tail -f textname 持续不断的查看一个不断更新的文件
   的尾部。
+6.标准输入重定向默认从键盘读入输入，也可以从一个文件中读入输入，如下
+  program < inputfile > outfile
+7.unix管道将一个程序的标准输出作为另一个程序的标准输入，这样可以节省计算的时间。因为可以
+  不用再读磁盘。如下是一个使用grep的管道命令
+  grep -v "regularexpression1" textname | \
+  grep --color -i "regularexpression2"
+  上面的管道命令第一行以文件作为标准输入，第一行处理后的结果作为第二个程序的标准输入。
+  其中|为管道符号。grep命令的格式如下
+  grep [options] regularexpressionpattern [file].

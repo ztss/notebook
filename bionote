@@ -1,4 +1,14 @@
 1.cat txtname可以查看一个文件，在中间加空格可以依次查看每一个文件。这个操作会将文件中的
   内容打印到输出流中，我们可以使用>或者>>重定向，将这些流中的数据弄到另一个文件中，其中
   如果不存在另一个文件，那么就会新建一个文件，>会重写已有的文件，而>>则在已有的文件后面
-  添加。
+  添加。即
+  cat txt1name txt2name > newtextname or cat txt1name txt2name >> newtextname
+2.ls -lrt 可以看到每一个文件建立的时间，并且按照从旧到新排序。r即reverse，t即time。
+3.我们也可以使用如下语句将standard error信息打印到一个文件中，其中重定向符号为2>.
+  ls -l existingtext noexistingtext > listingtext 2> errorinfotext
+  当然也有2>>，逻辑与文件重定向符号一样。
+4.有时候我们不希望将我们操作的信息打印在屏幕上，也不希望将输出的信息存入文件中，因为这样
+  会很慢，所以我们可以将这些重定向到一个特殊的文件中/dev/null.所有的这些信息都会消失。
+5.使用tail可以查看一个文件的尾部，也可以使用数字控制看最后几行
+  tail -number textname 也可以使用 tail -f textname 持续不断的查看一个不断更新的文件
+  的尾部。

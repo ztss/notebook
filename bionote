@@ -31,3 +31,25 @@
 10.我们也可以使用tee命令将一个程序的输出重定向到文件中，这是这个输出的一个copy，所以我
    们还可以使用管道将输出作为另一个文件的输入。如下
    program1 inputfile.txt | tee interfile.txt | program2 > outputfile.txt。
+11.通过在一条shell命令后面加&,我们可以将这个process运行在后台，而即使这个process没有完
+   成,我们仍然可以使用shell。如
+   program inputfile.txt > outfile.txt &
+   然后使用jobs可以查看所有在后台运行的process，并且可以看到他们的id，然后使用fg加上id
+   可以将一个后台放回前台运行。但是必须记住，虽然这些程序在后台运行，但是如果关掉我们的
+   终端，那么这些程序就会终止。我们也可以将前台的程序转移到后台运行，使用crlt+z可以中断
+   当前运行的前台程序，然后使用bg命令来移到后台运行。
+12.程序运行完成后会有返回码，如果成功运行结束，那么这个status就是0，否则就是非0.我们可
+   以利用这个还有&&或者||来实现条件运行。
+13.unixshell有命令代换的功能
+   echo "there are $(grep -c "^>" inputfile.txt)entries in my file."
+   grep -c "^>" inputfile.txt 统计文件中有几行包含>。这就是命令代换。
+   我们可以使用以下命令来创建文件，使得文件名字包含创建文件的时候的日期。
+   mkdir results-$(date +%F)
+14.如果有一些操作我们经常用到，那么我们可以给这些操作一些别名。如
+   alias mkpr="mkdir -p {data/seqs,scripts,analysis}"
+   那么我们只要使用别名就可以使用这些命令了，可以节省一点时间。use add alias to add
+   it to your ~/.bashrc (or ~/.profile if on OS X).
+
+
+
+15

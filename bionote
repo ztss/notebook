@@ -51,5 +51,17 @@
    it to your ~/.bashrc (or ~/.profile if on OS X).
 
 
-
-15
+Working with Remote Machines
+15.我们可以使用ssh语句链接一个远程主机，在ssh后面加上需要链接主机的Ip地址就可以。
+16.使用hostname命令可以看到主机名字，而使用whoami可以看到用户名字。
+17.我们在shell上运行的语句（即我们的程序）随着我们把终端关闭就会被中止，这个时候我们可以
+   通过在语句前面加上nohub就可以让我们的程序继续运行即使我们把终端关闭了，这个语句会返
+   回一个processid,我们可以通过processid继续操作这个程序。如下
+   nohub program1 > outfile.txt &
+18.我们可以通过一个tmux命令建立一个新的会话。如下
+   tmux new-session -s mysessionname -s让我们可以给我们的新session一个名字。然后按
+   crlt+a+d可以退出这个session，回到我们本来的终端。然后使用
+   tmux list-sessions可以列出所有建立的session的名字，使用
+   tmux attach -t sessionname可以重新链接一个session。为什么我们要使用session呢，The
+   most useful feature of Tmux (and terminal multiplexers in general) is the
+   ability to detach and reattach sessions without losing our work。

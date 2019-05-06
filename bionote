@@ -65,3 +65,7 @@ Working with Remote Machines
    tmux attach -t sessionname可以重新链接一个session。为什么我们要使用session呢，The
    most useful feature of Tmux (and terminal multiplexers in general) is the
    ability to detach and reattach sessions without losing our work。
+
+
+Git for Scientists
+19.

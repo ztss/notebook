@@ -85,5 +85,22 @@ Git for Scientists
    repo.我们也可以取消-m，这样的话git会打开我们的默认文件编辑器，而且我们可以使用以下
    git config --global core.editor emacs改变我们的默认文件编辑器，当然你也可以使用
    vim。我们也可以使用
-   git commit -a -m "my commit message"to automatically stage all modified
+   git commit -a -m "my commit message" to automatically stage all modified
    tracked files in this commit。
+23.我们可以使用git diff查看当前我们还没有staged但是有改变的文件与之前有什么不同。比如
+   我们使用echo "xxxxxxx" >> README 向README文件中插入xxxxxxx，那么接下来使用
+   git diff 就可以看出他与之前版本的不同，但是如果我们将这个改变放入stage中，即
+   git add README。那么再使用git diff就不会有什么不同了。但是我们也可以使用
+   git diff --staged 来查看加入stage的文件与之前的不同。
+24.我们的commit就像一个链，或者说更加像一个有向无环图，其中每一个节点都是我们项目一个
+   snapshots。我们可以使用
+   git log 来查看我们的commit chain。
+25. 为了能够移动以及移除tracked文件，我们需要git mv和git rm操作。
+26.注意到，有时候我们的项目会有一些文件永远都不会commmit，比如说一些很大的data文件，而
+   且这些文件可能会有很多，然后我们使用git status的时候，就会一连串的很长的list,我们可
+   以建立一个.gitignore文件在我们的项目文件夹下。然后添加我们想要忽略的文件的路径往这个
+   文件中，那么在git status的时候就不会显式这些文件了。一般在我们的项目我们需要忽略的文
+   件通常为比较大的文件，中间文件，文件编辑器临时文件，一些编程语言编译器或者解释器产生
+   的中间文件。我们可以使用以下语句给我们的git配置一个全局的ignore文件
+   git config --global core.excludesfile ~/.gitignore_global
+   当然我们首先需要建立这样一个文件。

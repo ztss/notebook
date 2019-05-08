@@ -68,4 +68,10 @@ Working with Remote Machines
 
 
 Git for Scientists
-19.
+19.我们应该使用git来管理我们的项目，来使得我们可以更好的合作工作。为了更好的使用git来合
+   作工作，我们首先应该告诉git我们的名字和Email。
+   git config --global user.name "yourname"
+   git config --global user.email "youemail"
+   也可以使用 git config --global color.ui true 来设置更方便我们使用的界面颜色。
+20.如果我们想用git管理我们的项目，首先进入到这个项目的文件夹，然后使用
+   git init 。然后这个文件夹下面就会生成一个.git文件。

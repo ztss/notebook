@@ -75,3 +75,10 @@ Git for Scientists
    也可以使用 git config --global color.ui true 来设置更方便我们使用的界面颜色。
 20.如果我们想用git管理我们的项目，首先进入到这个项目的文件夹，然后使用
    git init 。然后这个文件夹下面就会生成一个.git文件。
+   我们也可以从其他的地方克隆一个repo。使用以下语句就可以了
+   git clone url
+   这个时候你还不能直接改变你克隆的项目的原始版本。
+21.在我们建立的repo文件夹下，我们先使用git status来查看下我们的repo的状态，可以看到未
+   被track的文件以及我们当前所在的分支，然后可以使用
+   git add filename 添加一个被track的文件。
+22.

@@ -104,3 +104,8 @@ Git for Scientists
    的中间文件。我们可以使用以下语句给我们的git配置一个全局的ignore文件
    git config --global core.excludesfile ~/.gitignore_global
    当然我们首先需要建立这样一个文件。
+27.我们可以使用git reset来将我们对一个文件的改变从stage中移除出来，如
+   echo "hshshshshss" >> README.md
+   git add README.md
+   git reset HEAD README.md
+28.

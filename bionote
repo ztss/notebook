@@ -108,4 +108,22 @@ Git for Scientists
    echo "hshshshshss" >> README.md
    git add README.md
    git reset HEAD README.md
-28.
+28.GitHub使用了SSH key，所以在使用GitHub的时候，每一次push或者pull我们都不需要输入密
+   码。
+   这里我们的本地电脑需要链接到github,我们可以使用ssh key。我们之前用
+   ssh-keygen -b 2048生成了我们本地电脑的ssh key。
+   这个时候我们将这个命令生成的public key复制到GitHub我们的个人账户上，即打开setting
+   后的SSH and GPG keys。
+   然后就可以使用
+   ssh -T git@github.com登录github。
+   我们可以在我们的repo目录下使用
+   git remote add origin git@github.com:username/reponame.git
+   来将一个我们github上的repo和我们本地的repo链接起来。一般我们最好是将两个一样的repo
+   链接起来。然后使用git remote -v可以看到我们本地的repo可以理解的我们在GitHub上的repo
+   了。git remote rm <repository-name>也可以用来删除我们不用的远程repo。
+29.在将我们本地的repo与GitHub上的repo链接后，我们就可以将我们的工作push到GitHub上了。
+   我们可以使用git push <remote-name> <branch>来将本地的工作上传到GitHub上。
+30.github允许我们协助工作，所以在github上的项目有新的commit的时候，其他人可以pull到这
+   些commit,在每个人自己的项目目录下使用
+   git pull origin master 可以pull到其他人push到GitHub上的commit。
+31.使用git log -n 2可以看到最新的两个commit。

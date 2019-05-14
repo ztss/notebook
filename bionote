@@ -155,3 +155,23 @@ Git for Scientists
    git log --pretty=oneline --abbrev-commit.
    然后使用这些id，可以得到任意版本commit的文件，如下
    git checkout id -- <file>
+35.git stash可以隐藏并且存储我们没有commit的改变。
+36.我们可以使用git diff语句来比较任意两个不同的commit。
+   git diff id。可以比较idcommit与当前的commit有什么不同。
+   也可以比较任意两个commit中一个文件的不同，如下:
+   git diff id id <file>
+37.我们可以使用
+   git commit --amend。改变我们commit的注释语。
+38.我们使用以下语句建立一个branch
+   git branch <branchname>,然后使用git branch可以看到每个branch。
+   然后使用
+   git checkout <branchname>可以切换到这个branch。然后就可以在这个branch中对我们的项
+   目进行改变。并且不会影响到master。我们可以使用
+   git log --abbrev-commit --pretty=oneline --graph --branches -n 2
+   来看到每一个branch的commit并且是以图的形式。并且控制只看最后两个。
+   我们可以将branch中的commit merge到master中。首先切换到master
+   然后使用
+   git merge branchname 就可以将分支中的commit merge到master中了。
+39.我们使用
+   git branch -all 可以看到我们repo中所有的branch。包括我们与远程链接的branch.即
+   remotes/origin/master。

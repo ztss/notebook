@@ -127,3 +127,25 @@ Git for Scientists
    些commit,在每个人自己的项目目录下使用
    git pull origin master 可以pull到其他人push到GitHub上的commit。
 31.使用git log -n 2可以看到最新的两个commit。
+32.我们有时候会碰到merge conflict。为了解决这些冲突，我们可以使用下面这一系列的方法。
+  （以待下次解决）。什么是merge conflict呢，比如说我们在github上的项目同时有两个人在跟
+   进，分别为a和b，a修改了readme，然后a push这个commit到github上，这个时候如果b也修改
+   了readme，然后b想push 到github上，这个时候会提示b必须先从GitHub pull a跟新的commit,
+   然后b使用git pull origin master。这个时候会提示b有merge conflict。这个时候我们先
+   使用git status 命令查看我们本地repo的状态。然后这个命令会告诉我们readme文件有merge
+   conflict。然后我们使用vim 打开b的readme。会看到最后几行是这样的。
+   <<<<<<< HEAD
+   \n\nMaizi reference genome vesion:refgen3
+   we downloaded refgen3 on 2019-5-14.
+   =======
+   \n\nMaizi reference genome vesion:refgen3,downloaded 2019-5-14 from
+   http://maizegdp.org into '/share/data/refgen3/'.
+   >>>>>>> 0a772d45affa033a70abf9ba0a70a98822376f9e
+   其中head在git中代表的是最后一次的commit。在这里也即是b所修改的readme文件的内容。
+   然后=====代表head的结尾和a修改的开始。然后我们就编辑这个文件来解决merge conflict。
+   解决完了以后使用git add README.md命令。然后使用git status命令来查看本地repo的状态
+   ,这个时候可以看到所有的conflict已经解决了。然后使用git commit -a -m "we solve
+   merge conflict"来提及我们的commit,然后我们使用git push origin master来将这个跟新
+   push到GitHub上。然后来到a的repo的文件夹下，使用git pull origin master来将a下的
+   readme更新。这样merge conflict就解决了。
+33

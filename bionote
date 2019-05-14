@@ -148,4 +148,10 @@ Git for Scientists
    merge conflict"来提及我们的commit,然后我们使用git push origin master来将这个跟新
    push到GitHub上。然后来到a的repo的文件夹下，使用git pull origin master来将a下的
    readme更新。这样merge conflict就解决了。
-33
+33.我们可以使用git log --graph命令来查看我们commit的纯文本图。也可以使用
+   git merge --abort来放弃一次合并，并且重新来过。
+34.我们可以使用git checkout命令来得到以往commit的文件
+   如下，git checkout -- <file>.当然我们也可以使用下面语句获得每一个commit的id。
+   git log --pretty=oneline --abbrev-commit.
+   然后使用这些id，可以得到任意版本commit的文件，如下
+   git checkout id -- <file>

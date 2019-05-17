@@ -175,3 +175,10 @@ Git for Scientists
 39.我们使用
    git branch -all 可以看到我们repo中所有的branch。包括我们与远程链接的branch.即
    remotes/origin/master。
+
+
+
+Bioinformatics data
+40.在处理生物信息数据的时候，有三点必须注意：首先是数据的获取方法，然后要确保数据的正确
+   性，最后就是我们必须要知道如何处理压缩数据。
+41.数据下载常常用到两个命令：curl,wget。

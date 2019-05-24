@@ -181,4 +181,9 @@ Git for Scientists
 Bioinformatics data
 40.在处理生物信息数据的时候，有三点必须注意：首先是数据的获取方法，然后要确保数据的正确
    性，最后就是我们必须要知道如何处理压缩数据。
-41.数据下载常常用到两个命令：curl,wget。
+41.数据下载常常用到两个命令：curl,wget。其中wget有一个很有用的功能就是递归下载(recurs
+   ive download)。比如说我们想要从一个页面将所有特定类型的文件下载下来，我们可以使用下
+   面的命令
+   wget --accept "*.gtf" --no-directories --recursive --no-parent \
+   http://genomics.someuniversity.edu/labsite/annotation.html
+   一般wget加上需要下载资源的url就可以下载下来。

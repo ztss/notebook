@@ -187,3 +187,18 @@ Bioinformatics data
    wget --accept "*.gtf" --no-directories --recursive --no-parent \
    http://genomics.someuniversity.edu/labsite/annotation.html
    一般wget加上需要下载资源的url就可以下载下来。
+42.rsync命令可以用来从一个机器拷贝文件到另一个文件。一般用法如下：
+   rsync -avz -e ssh zea_mays/data/ vinceb@[...]:/home/deborah/zea_mays/data
+   其中-avz是命令选项，可以使我们清楚的看到拷贝的每一步步骤。然后为了链接两个机器，需要
+   使用-e ssh。然后就是本地需要拷贝文件的目录，然后是user@host:/path这样的远程机器的
+   文件目录。如果只是拷贝单个文件，那么我们可以使用scp。这样可以更快的进行传输，scp的使
+   用方法和rsync差不多。
+43.为了确保在大文件传输的过程中，我们的文件传输没有发生差错，我们需要使用checksum来检查
+   文件是否完全正确。
+44.checksum只要文本完全一样，就算计算的时间和系统不一样，校验和也会完全一样。我们可以使
+   用 shasum data/*fastq > fastq_checksums.sha 这条语句来将data文件夹下的fastq文件
+   全部的shasum值存入到fastq_checksums.sha文件中。
+45.diff可以检查文件每一行的不同。可以这样使用
+   diff -u tetx1 text2。
+46.很多时候，我们可以直接处理压缩数据，所以将数据压缩是一种很好的方法。有两种压缩的方法
+   gzip,bzip2。

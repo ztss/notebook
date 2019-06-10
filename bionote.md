@@ -7,3 +7,7 @@
 + 上面这些文件格式分隔的格式只是以列分隔的，而如何分隔行呢？在linux和OS X系统中使用\n分隔行。
   而在DOS-style使用\r\n分隔行，比如说CSV文件。
 ### Inspecting Data with Head and Tail
++ 可以使用head -n 3 txtname或者tail来查看文件的前几行或者末尾几行。也可以使用(head -n 2; tail -n 2) <
+  txtname来同时查看前几行和末尾几行。
++ 也可使用使用grep来挑选出文件中的行，然后使用管道，用head打印出符合正则表达式的前几行。
+### Less

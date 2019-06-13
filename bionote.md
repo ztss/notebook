@@ -19,3 +19,50 @@
   step1 inputfile | step2 | less
   step1 inputfile | step2 | step3 | less
   ```
+### Plain-Text Data Summary Information with wc,ls,and awk
++ wc输出一个文件的行数，单词数，char数。
+  ```
+  wc textname
+  wc -l textname//列出行数
+  ```
++ 我们可使用以下语句求出文件中所有非空的行数
+  ```
+  grep -c "[^\\n\\t]" text.txt
+  ```
++ awk可以用来计算文件中的列数，默认将tabs和spaces作为列的分隔符。但是处理BED和GTF格式的文件只需要将tabs作为
+  分隔符就可以了，所以使用以下语句
+  ```
+  awk -F "\t" '{print NF; exit}' Mus_musculus.GRCm38.75_chr1.bed
+  ```
++ awk默认处理文件第一行，所以对于开始几行有注释的文件就需要一些技巧了。我们可以使用tail来消去前面几行。
+  ```
+  tail -n +6 Mus_musculus.GRCm38.75_chr1.gtf | awk -F "\t" '{print NF; exit}'
+  ```
+  但是我们最好可以使用grep来筛选我们需要的行，这样可以适用于更多文件。
+### Working with Column Data with cut and Columns
++ 使用cut可以选出文件中特定的几列。如下
+  ```
+  grep -v "^#" Mus_musculus.GRCm38.75_chr1.gtf | cut -f1,4,5 > test.txt
+  //首先使用正则表达式筛选行数，然后使用cut选出1，4，5列输出到test.txt文件中。
+  ```
+  对于不是使用tabs作为分隔符的文件，而是使用delim的文件可以指定特定的分隔符
+  ```
+  cut -d, -f2,3 Mus_musculus.GRCm38.75_chr1_bed.csv | head -n 3
+  ```
+### Formatting Tabular Data with Column
++ 有一些数据不适合肉眼查看，我们可以用column -t来将数据展现为一个表格样式。这样就易于程序员阅读。
+  ```
+  grep -v "^#" Mus_musculus.GRCm38.75_chr1.gtf | cut -f 1-8 | column -t | head -n 3
+  ```
+### The All-Powerful grep
+### Decoding Plain-Text Data:hexdump
+### Sorting Plain-Text Data with Sort
+### Finding Unique Values in Uniq
+### Join
+### Text Processing with Awk
+### Bioawk:An Awk for Biological Formats
+### Stream Editing with Sed
+## Advanced Shell Tricks
+### Subshells
+### Named Pipes and Process Substitution
+## The Unix Philosophy Revisited

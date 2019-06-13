@@ -11,3 +11,11 @@
   txtname来同时查看前几行和末尾几行。
 + 也可使用使用grep来挑选出文件中的行，然后使用管道，用head打印出符合正则表达式的前几行。
 ### Less
++ less可以用来检查文件以及管道程序中间结果。less txtname即可。也可以按下/，然后输入想要搜索的词。就能
+  高亮的显式搜索结果。
++ 使用以下语句可以检查中间结果。
+  ```linux command
+  step1 inputfile | less
+  step1 inputfile | step2 | less
+  step1 inputfile | step2 | step3 | less
+  ```

@@ -55,6 +55,11 @@
   grep -v "^#" Mus_musculus.GRCm38.75_chr1.gtf | cut -f 1-8 | column -t | head -n 3
   ```
 ### The All-Powerful grep
++ grep非常的快，因为它的功能非常的单一。
+  ```
+  grep Olfr Mus_musculus.GRCm38.75_chr1_genes.txt | grep -v Olfr1413
+  //从文件中挑选包含特定串的基因但是不包含Olfr1413的基因
+  ```
 ### Decoding Plain-Text Data:hexdump
 ### Sorting Plain-Text Data with Sort
 ### Finding Unique Values in Uniq

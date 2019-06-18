@@ -59,6 +59,16 @@
   ```
   grep Olfr Mus_musculus.GRCm38.75_chr1_genes.txt | grep -v Olfr1413
   //从文件中挑选包含特定串的基因但是不包含Olfr1413的基因
+  grep -v bioinfo example.txt
+  //除去example中包含bioinfo的行
+  grep -v -w bioinfo example.txt
+  //除去example中包含bioinfo这个单词的行
+  ```
++ grep可以统计文本中多少行符合特定的pattern
+  ```
+  $grep -c "Olfr" Mus_musculus.GRCm38.75_chr1_genes.txt
+  27
+
   ```
 ### Decoding Plain-Text Data:hexdump
 ### Sorting Plain-Text Data with Sort

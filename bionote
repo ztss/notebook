@@ -202,3 +202,8 @@ Bioinformatics data
    diff -u tetx1 text2。
 46.很多时候，我们可以直接处理压缩数据，所以将数据压缩是一种很好的方法。有两种压缩的方法
    gzip,bzip2。
+
+
+
+Bioinformatics Data Skills
+Inspecting and Manipulating Text Data with Unix Tools

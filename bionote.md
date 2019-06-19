@@ -70,7 +70,36 @@
   27
 
   ```
++ grep之所以速度很快是因为它在寻找匹配行的时候，只要已找到pattern，那么这一行剩下的就不会在查找了，
+  而是直接将这一行送入到standard output中。使用以下语句可以只显式满足pattern的单词。
+  ```
+  $grep -o "Olfr.*" Mus_musculus.GRCm38.75_chr1_genes.txt | head -n 3
+  Olfr1416
+  Olfr1415
+  Olfr1414
+  ```
++ 使用以下语句可以提取出gtf文件中的gene_id field。
+  ```
+  $ grep -E -o 'gene_id "\w+"' Mus_musculus.GRCm38.75_chr1.gtf | head -n 5
+  gene_id "ENSMUSG00000090025"
+  gene_id "ENSMUSG00000090025"
+  gene_id "ENSMUSG00000090025"
+  gene_id "ENSMUSG00000064842"
+  gene_id "ENSMUSG00000064842"
+  ```
+  然后使用以下语句可以将上面得出的结果处理。
+  ```
+  $ grep -E -o 'gene_id "(\w+)"' Mus_musculus.GRCm38.75_chr1.gtf | \
+    cut -f2 -d" " | \
+    sed 's/"//g' | \
+    sort | \
+    uniq > mm_gene_id.txt
+  ```
+  这一系列语句，cut -f2 -d" "将grep得出的结果只取第二列。即只将基因id选出来。
+  sed 's/"//g'有这样的用法 sed's/要被替代的字符串/新的字串/g'。所以这里将"替代为空字符。
+  然后sort将结果排序，uniq去除重复行，最后输出到mm_gene_id.txt文件中。
 ### Decoding Plain-Text Data:hexdump
+
 ### Sorting Plain-Text Data with Sort
 ### Finding Unique Values in Uniq
 ### Join

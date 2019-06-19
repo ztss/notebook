@@ -183,8 +183,68 @@
   $ sort -k1,1 -k4,4n --parallel 4 Mus_musculus.GRCm38.75_chr1_random.gtf
   ```
 ### Finding Unique Values in Uniq
++ uniq只会删除连续的重复的field。如果想要将文件中所有重复的field都删除，那么就需要将文件先排序。
+ ```
+ $ sort letters.txt | uniq
+ $ sort letters.txt | uniq -c
+ 可以列出每个field出现的次数。
+ $ grep -v "^#" Mus_musculus.GRCm38.75_chr1.gtf | cut -f3 | sort | uniq -c | \
+ $ sort -rn
+ 上面这个语句将文件中grep筛选出来的结果先去除第三列，然后排序，然后去重并且列出个数，最后
+ 将结果按照逆序排序输出。
+ ```
++ uniq加上-d option可以输出所有重复的行。
+  ```
+  $ uniq -d mm_gene_names.txt | wc -l
+  ```
 ### Join
++ The Unix tool join is used to join different files together by a common column.
+  可以使用echo $?来查看我们命令运行的返回码，根据返回码可以判断命令运行情况。
++ join的用法：-1 <file_1_field> -2 <file_2_field> <file_1> <file_2>。注意，join之前需要
+  先排序。
+  ```
+  example.bed原始数据
+  chr1 26 39
+  chr1 32 47
+  chr3 11 28
+  chr1 40 49
+  chr3 16 27
+  chr1 9 28
+  chr2 35 54
+  chr1 10 19
+  example_lengths.txt原始数据
+  chr1 58352
+  chr2 39521
+  chr3 24859
+  先对要join的列进行排序
+  $ sort -k1,1 example.bed > example_sorted.bed
+  $ sort -c -k1,1 example_lengths.txt
+  $ join -1 1 -2 1 example_sorted.bed example_lengths.txt > example_with_lengths.txt
+  $ cat example_with_lengths.txt
+  chr1 10 19 58352
+  chr1 26 39 58352
+  chr1 32 47 58352
+  chr1 40 49 58352
+  chr1 9 28 58352
+  chr2 35 54 39521
+  chr3 11 28 24859
+  chr3 16 27 24859
+  然后就要检查join是否成功，分别统计join的第一个文件的行数以及join结果文件的行数
+  $ wc -l example_sorted.bed example_with_lengths.txt
+  ```
++ join加上-a option可以将join中不配对的行也输出到结果中。形成如下的结果
+  ```
+  chr1 10 19 58352
+  chr1 26 39 58352
+  chr1 32 47 58352 
+  chr1 40 49 58352
+  chr1 9 28 58352
+  chr2 35 54 39521
+  chr3 11 28
+  chr3 16 27
+  ```
 ### Text Processing with Awk
++ 前面我们介绍的grep，cut，join，sort对于简单的任务可以胜任，但是对于稍显复杂的任务就需要awk了。
 ### Bioawk:An Awk for Biological Formats
 ### Stream Editing with Sed
 ## Advanced Shell Tricks

@@ -245,6 +245,50 @@
   ```
 ### Text Processing with Awk
 + 前面我们介绍的grep，cut，join，sort对于简单的任务可以胜任，但是对于稍显复杂的任务就需要awk了。
++ awk被设计为用来处理表数据，所以awk处理的是record，一般指的是表中的行，awk的结构为 pattern
+  {action},pattern是一个expression或者regular expression pattern。如果pattern中的表达式
+  为真或者regex匹配，那么就执行action。
+  ```
+  $ awk '{print $0}' example.bed 打印example中的所有record，这条语句没有pattern，就会直接
+  执行action了。其中$0代表整个记录，而$1代表记录的第一个field，以此类推。
+  或者
+  $ awk '{print $2 "\t" $3}' example.bed
+  26 39
+  32 47
+  11 28
+  40 49
+  16 27
+  9  28
+  35 54
+  10 19
+  $ awk '$3-$2>18' example.bed
+  chr1  9  28
+  chr2  35 24
+  这里只用到了pattern，输出第三个field和第二个field相差18的record。
+  $ awk '$1 ~ /chr1/ && $3-$2>10' example.bed
+  这里的~代表第一个field遵守后面的正则表达式，并且满足后面的大小关系，然后会把符合的结果输出。
+  或者
+  $ awk '$1 ~ /chr2|chr3/ {print $0 "\t" $3-$2}' example.bed
+  chr3 11 28 17
+  chr3 16 27 11
+  chr2 35 54 19
+  这个命令既有pattern也有action，首先找出满足pattern的record，然后执行Acton中的语句输出。
+  ```
+  所以可以看出awk主要在两个时候会被用到
+  1. 当我们过滤数据的规则中既包含了正则表达式有包含了算术规则的时候。
+  2. 当我们需要使用算术规则重新定义数据的列的格式的时候。
++ 在awk中我们也可以使用begin和end来写命令语句
+  ```
+  $ awk 'BEGIN{s=0}; {s+=($3-$2)}; END{print "mean: " s/NR};' example.bed
+  mean: 14
+  这里我们用到了awk中的另一个常量NR，NR就是current record number。
+  BEgin语句在我们读取第一条记录之前运行，而END语句在读取完最后一条语句之后运行。这条语句首先
+  定义了一个变量初始化为0，然后读取每一条记录的时候运行中间的action，最后读取完所有的记录后输出
+  s/NR。
+  ```
++ While Awk is designed to work with whitespace-separated tabular data, it’s easy to set   
+  a different field separator: simply specify which separator to use with the -F argument.
+  For example, we could work with a CSV file in Awk by starting with awk -F",".
 ### Bioawk:An Awk for Biological Formats
 ### Stream Editing with Sed
 ## Advanced Shell Tricks

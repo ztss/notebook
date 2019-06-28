@@ -309,7 +309,7 @@
   ```
   可以看出，awk的确是一种编程语言，有时候如果我们写太长的awk语句，那么也可以使用python代替。
 ### Bioawk:An Awk for Biological Formats
-+ 
++
 ### Stream Editing with Sed
 ## Advanced Shell Tricks
 ### Subshells

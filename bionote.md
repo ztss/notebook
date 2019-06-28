@@ -285,11 +285,31 @@
   BEgin语句在我们读取第一条记录之前运行，而END语句在读取完最后一条语句之后运行。这条语句首先
   定义了一个变量初始化为0，然后读取每一条记录的时候运行中间的action，最后读取完所有的记录后输出
   s/NR。
+  $ awk 'NR>=3 && NR<=5' example.bed
+  输出文件中第三行和第五行之间的数据。
   ```
 + While Awk is designed to work with whitespace-separated tabular data, it’s easy to set   
   a different field separator: simply specify which separator to use with the -F argument.
   For example, we could work with a CSV file in Awk by starting with awk -F",".
++ 我们也可以使用awk轻松的转换各种生物信息学中的文件比如说 BED和GTF。
+  ```
+  $ awk '!/^#/ {print $1 "\t" $4-1 "\t" $5}' Mus_musculus.GRCm38.75_chr1.gtf | head -n3
+  1 3054232 3054733
+  1 3054232 3054733
+  1 3054232 3054733
+  ```
++ awk中也定义一种关联数组，即associative array。有点类型python中的dict。
+  ```
+  $awk '/Lypla1/ {feature[$3]+=1}; END {for (k in feature) print k "\t" feature[k]}'   Mus_musculus.GRCm38.75_chr1.gtf
+  这条语句首先找到名为Lypla1的基因，然后将这个基因的第三个filed作为关联数组feature的索引值，
+  每次碰到相同的field，feature索引值对应的数字就加一。最后读完所有的record后输出基因的第三个
+  field以及这个field出现的次数。
+  要达到相同的目的，使用unix命令行的方式也可以。
+  $ grep 'Lypla1' Mus_musculus.GRCm38.75_chr1.gtf | cut -f3 | sort | uniq -c
+  ```
+  可以看出，awk的确是一种编程语言，有时候如果我们写太长的awk语句，那么也可以使用python代替。
 ### Bioawk:An Awk for Biological Formats
++ 
 ### Stream Editing with Sed
 ## Advanced Shell Tricks
 ### Subshells

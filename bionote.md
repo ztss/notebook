@@ -311,7 +311,37 @@
 ### Bioawk:An Awk for Biological Formats
 +
 ### Stream Editing with Sed
++ sed reads data from a file or standard input and can edit a line at a time.
++ sed替换选项
+  ```
+  $ sed 's/pattern/replacement/' text.txt
+  $ sed 's/chrom/chr/' chroms.txt | head -n 3
+  ```
 ## Advanced Shell Tricks
 ### Subshells
 ### Named Pipes and Process Substitution
++ First in first out.在我们使用pipe的时候，可能需要同时输入输出多个文件。这个时候我们可以创建named
+  file。
+  ```
+  $ mkfifo fqin
+  $ ls -l fqin
+  prw-r--r-1 vinceb staff
+  我们创建了一个名叫fqin的named pipe。
+  ```
++ 有时候单独的pipe我们不能处理这种情况
+  ```
+  $ processing_tool --in1 in1.fq --in2 in2.fq --out1 out2.fq --out2.fq
+  这个时候，in1.fq,in2.fq,out1.fq,out2.fq都可以是named pipe。
+  ```
+  我们可以使用一种叫做process Substitution的方法来隐式的定义named pipe。
+  ```
+  $ rm fqin
+  $ cat <(echo "hello, process substitution")
+  Your shell then replaces this chunk (the <(...) part) with the path to this anonymous named pipe.
+  改写上面的命令
+  $ program --in1 <(makein raw1.txt) --in2 <(makein raw2.txt) --out1 out1.txt --out2 out2.txt
+  或者
+  $ program --in1 in1.txt --in2 in2.txt  --out1 >(gzip > out1.txt.gz) --out2 >(gzip > out2.txt.gz)
+  这样就创建了两个anonymous named pipes。
+  ```
 ## The Unix Philosophy Revisited

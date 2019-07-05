@@ -351,8 +351,25 @@
 # A Rapid Introduction to the R Language
 + R通常是作为一种处理数据的编程语言。画图在生物信息学中是非常重要的，它可能揭示一些统计学模型
   或者假设检验中没有的模式。
++ 本章的目的是教您EDA(exploratory data analysis)技能，使您可以在任何分析阶段自由探索和试验您的数据。
 ## Geting Started with R and RStudio
++ 我们必须将我们数据分析过程中所写的代码存入R script中。
++ The Comprehensive R Archive Network(CRAN)。可以用install.packages("")下载到大多数R包。
 ## R Language Basics
 ### Simple Calculations in R, Calling Functions, and Getting Help in R
++ R默认打印七位有效数字。也可以使用
+  ```
+  print(sqrt(3.5),digits=10)
+  打印10为有效数字
+  可以用 getOption('digits')获得打印数位的全局选项，也可以使用
+  options(digits=9)来将默认数位选项改为9位。
+  > round(sqrt(3.5), digits=3)
+  [1] 1.871
+  通过在函数中指定digits，可以指定函数作用到参数第几个数位。
+  ```
++ 因为R中含有太多的函数，所以我们在使用R的时候必须掌握两点
+  1. 学会看函数的文档了解他的参数和他的原理。(?function or help(function))
+  2. 能够找到新的有用的函数。(??"函数的简短描述")
 ### Variables and Assignment
+
 ### Vectors, Vectorization, and Indexing

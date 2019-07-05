@@ -345,3 +345,14 @@
   这样就创建了两个anonymous named pipes。
   ```
 ## The Unix Philosophy Revisited
+
+
+
+# A Rapid Introduction to the R Language
++ R通常是作为一种处理数据的编程语言。画图在生物信息学中是非常重要的，它可能揭示一些统计学模型
+  或者假设检验中没有的模式。
+## Geting Started with R and RStudio
+## R Language Basics
+### Simple Calculations in R, Calling Functions, and Getting Help in R
+### Variables and Assignment
+### Vectors, Vectorization, and Indexing

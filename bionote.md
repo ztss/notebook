@@ -487,6 +487,89 @@
   > table(hits)
   hits
   chrX chrY chr2 chr3 chr4
-  1    0    3    3    0 
+  1    0    3    3    0
   ```
 ## Working with and Visualizing Data in R
+### Loading Data into R
++ R中的路径操作
+  ```
+  > getwd() 获得当前的工作路径
+  > setwd("path") 设置自己的工作路径
+  ```
++ 有两个方法可以提升R读入大文件时候的效率
+  1. First, we could explicitly set the class of each column through the colClasses argument.
+  2. Additionally, specifying how many rows there are in your data by setting nrow in  read.delim() can lead to some performance gains.
+  3. R的数据读入函数也可以读压缩文件，所以可以把大文件先压缩在读入R中。
++ 读入数据操作，read.csv(),read.delim()分别用来读入CSV文件和tab-delimited文件。
+  ```
+  > d <- read.csv("Dataset_S1.txt")
+  read.csv()和read.delim()函数的header参数默认为真，因为上面读入的文件第一行是列的名字而不是
+  数据。所以采用默认值。
+  而对于没有列名的文件我们也可以赋予他们列名
+  > bd <- read.delim("noheader.bed", header=FALSE, col.names=c("chrom", "start", "end"))
+  ```
++ 通常，读入R中的数据有两种类型
+    1. wide format:每一个测量变量都有自己的列。
+    2. long format:一列用于存储测量的变量类型，另一列用于存储测量值。
+  许多中情况下，由人类排列的数据都是wide format，但是当我们想要画图的时候，却需要的是long format。
+  使用reshape2包中的函数，melt()可以将wide data变为long data。cast则相反。
+### Exploring and Transforming Dataframes
++ 这个时候由R读入的数据是dataframe。数据帧是R用于存储表格数据的主力数据结构。dataframe中的每一列
+  都是一个vector，即每一列都是相同类型的数据。storing columns of heterogeneous types of vectors is what dataframes are designed to do.
+  ```
+  > head(d,n=3)查看读入文件的前三行。
+  > nrow(d)
+  [1] 59140
+  > ncol(d)
+  [1] 16
+  > dim(d)
+  1] 59140 16
+  查看读入文件的维度。
+  > colnames(d)
+  查看读入文件的列名。
+  colnames(d)[12] <- "percent.GC"
+  改变列名
+  ```
++ 我们也可以将一系列的vector创建为data.frame
+  ```
+  > x <- sample(1:50, 300, replace=TRUE)
+  > y <- 3.2*x + rnorm(300, 0, 40)
+  > d_sim <- data.frame(y=y, x=x)
+  ```
++ 使用d$depth 可以访问dataframe中的一个列。使用df[row,col]可以取得dataframe中指定row和col的数据。
+  也可以使用列名去访问。
+  ```
+  > d[1, c("start", "end")]
+    start end
+  1 55001 56000
+  通常取得dataframe中的一列的输出是vector，但是如果我们想取得一列的结果仍然是dataframe。可以这样
+  > d[, "start", drop=FALSE]
+  ```
+  我们也可以在我们读入的dataframe数据中增加一列。
+  ```
+  > d$cent <- d$start >= 25800000 & d$end <= 29700000
+  > table(d$cent)
+  FALSE TRUE
+  58455 685
+  ```
+### Exploring Data Through Slicing and Dicing: Subsetting Dataframes
+### Exploring Data Visually with ggplot2 I: Scatterplots and Densities
+### Exploring Data Visually with ggplot2 II: Smoothing
+### Binning Data with cut() and Bar Plots with ggplot2
+### Merging and Combining Data: Matching Vectors and Merging Dataframes
+### Using ggplot2 Facets
+### More R Data Structures: Lists
+### Writing and Applying Functions to Lists with lapply() and sapply()
+#### Using lapply()
+#### Writing functions
+#### Digression: Debugging R Code
+#### More list apply functions: sapply() and mapply()
+### Working with the Split-Apply-Combine Pattern
+### Exploring Dataframes with dplyr
+### Working with Strings
+## Developing Workflows with R Scripts
+### Control Flow: if, for, and while
+### Working with R Scripts
+### Workflows for Loading and Combining Multiple Files
+### Exporting Data
+## Further R Directions and Resources

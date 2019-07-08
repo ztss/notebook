@@ -371,5 +371,122 @@
   1. 学会看函数的文档了解他的参数和他的原理。(?function or help(function))
   2. 能够找到新的有用的函数。(??"函数的简短描述")
 ### Variables and Assignment
-
++ R中也可以使用=好代替<-，可以用ls()看R中我们赋值的变量。
 ### Vectors, Vectorization, and Indexing
++ 在R中可以用c()函数来将很多值组合成list或者vector。
++ 在R中vector十分重要，因为它可以允许我们不写loop就能遍历整个vector，而且r中的算术运算符也
+  可以直接对vector使用。
++
+  ```
+  > seq(3, 5)
+  [1] 3 4 5
+  > 1:5
+  [1] 1 2 3 4 5
+  > c(1, 2) + c(0, 0, 0, 0)
+  [1] 1 2 1 2
+  > c(1, 2) + c(0, 0, 0)
+  [1] 1 2 1
+  上面两条语句说明了R中的一个机制recycling。
+  ```
++ R中的许多函数也可以直接对vector使用。通常R利用这种向量化来避免loop，因为使用vector而不是
+  明确的loop可以明显的加快运算速度。
++ R中的vector也可以有名字。
+  ```
+  > b <- c(a=3.4, b=5.4, c=0.4)
+  > b
+    a b c
+    3.4 5.4 0.4
+  > names(b)
+  [1] "a" "b" "c"
+  > names(b) <- c("x", "y", "z") # change these names
+  > b
+    x y z
+    3.4 5.4 0.4
+  这个时候可以使用名字直接访问vector中的元素。
+  比如说b['x']
+  ```
++ 在R中也可以直接从一个vector中取出多个元素。这是R作为一种数据操作语言的一种非常好的特性。
+  ```
+  > x[c(2,3)]
+  [1] 95.3 0.4
+  ```
+  这种特性称为矢量化索引，是一种操作数据的十分强大的方法。
+  R中对于超过索引值的访问不会报错，而是会直接给出一个NA值。
+  ```
+  > z <- c(3.4, 2.2, 0.4, -0.4, 1.2)
+  > z[c(2, 1, 10)]
+  [1] 2.2 3.4 NA
+  ```
+  在R中使用负值索引可以排除这个索引值绝对值部分的值，打印出其他的所有值。
+  ```
+  > z[c(-4, -5)]
+  [1] 3.4 2.2 0.4
+  ```
+  索引能够用来将vector重新排序
+  ```
+  > z[5:1]
+  [1] 1.2 -0.4 0.4 2.2 3.4
+  这个是逆向排列
+  ```
+  我们也可以使用R中的函数来或者一个向量的正向排序序列索引。
+  ```
+  > order(z)
+  [1] 4 3 5 2 1
+  > z[order(z)]
+  [1] -0.4 0.4 1.2 2.2 3.4
+  > order(z, decreasing=TRUE)
+  [1] 1 2 5 3 4
+  > z[order(z, decreasing=TRUE)]
+  [1] 3.4 2.2 1.2 0.4 -0.4
+  使用decreasing选项可以得到序列的逆序索引
+  ```
+  也可以使用运算符来构造一个vector的logical索引值
+  ```
+  > v <- c(2.3, 6, -3, 3.8, 2, -1.1)
+  > v <= -3
+  [1] FALSE FALSE TRUE FALSE FALSE FALSE
+  使用这个功能我们可以取出一个vector中所有大于2的值
+  > v[v > 2]
+  [1] 2.3 6.0 3.8
+  > v > 2 & v < 4
+  [1] TRUE FALSE FALSE TRUE FALSE FALSE
+  > v[v > 2 & v < 4]
+  [1] 2.3 3.8
+  ```
+#### Vector types
++ R中的vector种类
+  1. Numeric
+  2. Integer
+  3. Character
+  4. Logical
++ R中的四种特殊值
+  1. NA
+  2. NULL
+  3. -Inf,Inf
+  4. NaN
++ R中对象的转换的本质是不能在转换过程中损失信息。
+#### Factors and classes in R
++ R中还有一种vector叫做factors，可以这样建立
+  ```
+  > chr_hits <- c("chr2", "chr2", "chr3", "chrX", "chr2", "chr3", "chr3")
+  > hits <- factor(chr_hits)
+  > hits
+  [1] chr2 chr2 chr3 chrX chr2 chr3 chr3
+  Levels: chr2 chr3 chrX
+  可以看到factors中不仅有原始的序列，还有一个levels,这里面包含了不同的固定的值。
+  > levels(hits)
+  [1] "chr2" "chr3" "chrX"
+  > hits <- factor(chr_hits, levels=c("chrX", "chrY", "chr2", "chr3", "chr4"))
+  > hits
+  [1] chr2 chr2 chr3 chrX chr2 chr3 chr3
+  Levels: chrX chrY chr2 chr3 chr4
+  上面的factors创建语句将所有的基因都包含进去了，虽然序列中并没有一些基因。
+  ```
+  可以统计factors中每一个levels的个数
+  ```
+  > table(hits)
+  hits
+  chrX chrY chr2 chr3 chr4
+  1    0    3    3    0 
+  ```
+## Working with and Visualizing Data in R

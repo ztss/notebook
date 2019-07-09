@@ -553,7 +553,29 @@
   58455 685
   ```
 ### Exploring Data Through Slicing and Dicing: Subsetting Dataframes
++ 我们能够通过逻辑向量来筛选出符合我们要求的行。
+  ```
+  > d$total.SNPs >= 85
+  [1] FALSE FALSE FALSE FALSE FALSE FALSE [...]
+  d中total.SNPS大于等于85的列为真。所以
+  > d[d$total.SNPs >= 85, ]
+  可以筛选出满足条件的行。
+  也可以将几个逻辑表达式结合起来
+  > d[d$Pi > 16 & d$percent.GC > 80, ]
+  当然也可以指定选出特定的列
+  > d[d$Pi > 16 & d$percent.GC > 80, c("start", "end", "depth", "Pi")]
+  or
+  > d[d$Pi > 16 & d$percent.GC > 80, c("start", "end", "Pi", "depth")]
+  dataframe中每列都是一个vector，所以如果只想在特定的某列中筛选，可以这样
+  > d$percent.GC[d$Pi > 16]
+  或者我们想输出最开始的4个Pi值大于10的行号，如下
+  > which(d$Pi > 10)[1:4]
+  [1] 2 16 21 23
+  也可以用subset函数达到相同的目的
+  > subset(d, Pi > 16 & percent.GC > 80, c(start, end, Pi, percent.GC, depth))
+  ```
 ### Exploring Data Visually with ggplot2 I: Scatterplots and Densities
+
 ### Exploring Data Visually with ggplot2 II: Smoothing
 ### Binning Data with cut() and Bar Plots with ggplot2
 ### Merging and Combining Data: Matching Vectors and Merging Dataframes

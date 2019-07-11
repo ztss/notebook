@@ -626,6 +626,44 @@
   ```
   > c(3, 4, -1) %in% c(1, 3, 4, 8)
   [1] TRUE TRUE FALSE
+  读入数据
+  > reps <- read.delim("chrX_rmsk.txt.gz", header=TRUE)
+  我们构造一个vector
+  > common_repclass <- c("SINE", "LINE", "LTR", "DNA", "Simple_repeat")
+  我们可以挑选出repClass在上面这个vector的行
+  > reps[reps$repClass %in% common_repclass, ]
+  我们可以使用如下语句挑选出repClass中数量最多的五个类
+  > sort(table(reps$repClass), decreasing=TRUE)[1:5]
+  > top5_repclass <- names(sort(table(reps$repClass), decreasing=TRUE)[1:5])
+  match()函数也有%in%的功能
+  > match(c("A", "C", "E", "A"), c("A", "B", "A", "E"))
+  [1] 1 NA 4 1
+  match返回第一个vector中元素在第二个vector中出现的第一次的索引。如果没有找到，则返回NA。
+  match的输出可以用来join两个dataframe通过共同的column。
+  ```
++ 读入数据
+  ```
+  > mtfs <- read.delim("motif_recombrates.txt", header=TRUE)
+  > rpts <- read.delim("motif_repeats.txt", header=TRUE)
+  为两个数据增加列
+  mtfs$pos <- paste(mtfs$chr,mtfs$motif_start,sep="-")
+  rpts$pos <- paste(rpts$chr,rpts$motif_start,sep="-")
+  增加的这两列为两个数据集公有的列
+  查看两个数据中公有的数据的条目
+  > table(mtfs$pos %in% rpts$pos)
+  FALSE TRUE
+  10832 9218
+  > i <- match(mtfs$pos, rpts$pos)
+  使用上面的vector为rpts增加一个列
+  > mtfs$repeat_name <- rpts$name[i]
+  可以移除mtfs中repeat_name为空的行
+  mtfs_inner <- mtfs[!is.na(mtfs$repeat_name),]
+  merge两个数据集
+  recm <- merge(mtfs,rpts,by.x="pos",by.y = "pos")
+  可以看出，mtfs_inner和recm得出的值基本一样。所以merge函数是十分有用的。
+  merge函数默认是 inner join。
+  通过添加参数all.x=TRUE，可以实现left outer joins，通过添加all.y=TRUE，可以实现right outer join。
+
   ```
 ### Using ggplot2 Facets
 ### More R Data Structures: Lists

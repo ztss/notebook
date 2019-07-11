@@ -621,6 +621,12 @@
   > ggplot(d) + geom_bar(aes(x=Pi), binwidth=1) + scale_x_continu ous(limits=c(0.01, 80)).
   ```
 ### Merging and Combining Data: Matching Vectors and Merging Dataframes
++ 将几个数据集集合起来分析也是一种很重要的数据分析的能力。
++ 可以使用%in%来找出一个vector中的元素是否在后面的那个vector中。
+  ```
+  > c(3, 4, -1) %in% c(1, 3, 4, 8)
+  [1] TRUE TRUE FALSE
+  ```
 ### Using ggplot2 Facets
 ### More R Data Structures: Lists
 ### Writing and Applying Functions to Lists with lapply() and sapply()

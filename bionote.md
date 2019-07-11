@@ -575,9 +575,33 @@
   > subset(d, Pi > 16 & percent.GC > 80, c(start, end, Pi, percent.GC, depth))
   ```
 ### Exploring Data Visually with ggplot2 I: Scatterplots and Densities
-
++ 使用ggplot2快速的画图。
+  ```
+  library(ggplot2)
+  > d$position <- (d$end + d$start) / 2
+  > ggplot(d) + geom_point(aes(x=position, y=diversity))
+  上面画图的代码分为两步，首先使用ggplot(d)将dataframe应用到plot上。ggplot2只能应用于
+  dataframe。所以需要将数据转换为dataframe才能使用ggplot2画图。然后后面的加号为plot添加
+  layer。layer可以分为散点图或者线图等等。上面的geom_point即添加一个散点图的layer。也称
+  geom_point为geometric object。每一个object都有不同的aesthetic attributes。上面的aes函数
+  是将dataframe中的列映射到aesthetic attributes的函数。
+  > ggplot(d, aes(x=position, y=diversity)) + geom_point() 与上面的语句一样。
+  为了缓解过度绘制，可以使用一个transparency level即alpha。
+  > ggplot(d) + geom_point(aes(x=position, y=diversity), alpha=0.01)
+  使用ggplot2画密度图
+  > ggplot(d) + geom_density(aes(x=diversity), fill="black")
+  这里的fill应用于所有的diversity点
+  > ggplot(d) + geom_density(aes(x=diversity, fill=cent), alpha=0.4)
+  这里的fill分为两部分，一部分cent=true，另一部分为cent=false。并且用alpha参数来区分这两个部分。
+  ```
 ### Exploring Data Visually with ggplot2 II: Smoothing
++ 可视化是观察大型数据的一种很好的方法。
++ 在画散点图的时候，我们经常叠加一个smooth curve来看两个变量之间的关系。
+  ```
+  > ggplot(d, aes(x=depth, y=total.SNPs)) + geom_point() + geom_smooth()
+  ```
 ### Binning Data with cut() and Bar Plots with ggplot2
++ 
 ### Merging and Combining Data: Matching Vectors and Merging Dataframes
 ### Using ggplot2 Facets
 ### More R Data Structures: Lists

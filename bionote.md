@@ -601,7 +601,25 @@
   > ggplot(d, aes(x=depth, y=total.SNPs)) + geom_point() + geom_smooth()
   ```
 ### Binning Data with cut() and Bar Plots with ggplot2
-+ 
++ 我们从复杂数据集中提取信息的另一种方法是通过分级（或离散化）来降低数据的分辨率。我们使用cut()函数
+  来为数据分区间，如下
+  ```
+  > d$GC.binned <- cut(d$percent.GC, 5)
+  将所选择的数据分为五个区间，新产生的列为factor，level是划分出的5个区间。可以用
+  > table(d$GC.binned)
+  (0.716,17.7] (17.7,34.7] (34.7,51.6] (51.6,68.5] (68.5,85.6]
+    6            4976         45784       8122          252
+  来查看落在5个区间中的数字的个数。
+  也可以认为的划分区间
+  > cut(d$percent.GC, c(0, 25, 50, 75, 100))
+  根据上面的区间可以画出条状图
+  > ggplot(d) + geom_bar(aes(x=GC.binned))
+  直接使用geom_bar会自动对所选的数据分区间。
+  也可以根据所选的区间来为变量画出密度图
+  > ggplot(d) + geom_density(aes(x=depth, linetype=GC.binned), alpha=0.5)
+  使用以下语句可以选择不同的划分区间大小，从而找到最合适的能够体现数据特征的binwidth。
+  > ggplot(d) + geom_bar(aes(x=Pi), binwidth=1) + scale_x_continu ous(limits=c(0.01, 80)).
+  ```
 ### Merging and Combining Data: Matching Vectors and Merging Dataframes
 ### Using ggplot2 Facets
 ### More R Data Structures: Lists

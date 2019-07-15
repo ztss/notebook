@@ -674,12 +674,112 @@
   > print(p)
   ```
 ### More R Data Structures: Lists
++ 不同于前面所学的vector只能包含相同的数据类型，list可以包含不同的数据类型，并且list可以包含R中的任何
+  类型，包括另一个list。dataframe是list。
+  ```
+  创建一个list
+  > adh <- list(chr="2L", start=14615555L, end=14618902L, name="Adh")
+  ```
++ 如果我们将不同的类型存在vector中，那么会进行变量强制转换，因为vector只能包含一种数据类型。
++ 访问list中的值
+  ```
+  > adh[1:2] $chr
+  [1] "2L"
+  $start
+  [1]
+  14615555
+  使用str()可以打印出list的结构类型,即包含的嵌套结构。
+  > z <- list(a=list(rn1=rnorm(20), rn2=rnorm(20)), b=rnorm(10))
+  > str(z)
+  List of 2
+   $ a:List of 2
+    ..$ rn1: num [1:20] -2.8126 1.0328 -0.6777 0.0821 0.7532 ...
+    ..$ rn2: num [1:20] 1.09 1.27 1.31 2.03 -1.05 ...
+  $ b: num [1:10] 0.571 0.929 1.494 1.123 1.713 ...
+  > adh[[2]]
+  [1] 14615555
+  > adh[['start']]
+  [1] 14615555
+  也可以如此访问。或者
+  > adh$chr
+  可以使用names()输出list的名字
+  > names(adh)
+  [1] "chr"   "start" "end"   "name"
+  ```
++ dataframes are built from lists, and each dataframe column is a vector stored as a
+  list element.
 ### Writing and Applying Functions to Lists with lapply() and sapply()
 #### Using lapply()
++ 创建实例数据
+  ```
+  > ll <- list(a=rnorm(6, mean=1), b=rnorm(6, mean=4), c=rnorm(6, mean=6))
+  假如我们想要求解每一个list中vector的mean,可以使用lapply()来将一个函数应用于list上。
+  > lapply(ll, mean)
+  $a
+  [1] 0.967971
+
+  $b
+  [1] 3.859597
+
+  $c
+  [1] 5.861516
+  通常这个方法可以让我们避免显式的使用loop。
+  如果list中的vector中有一个元素为NA,那么就要使用下面语句避免lapply()返回NA值
+  > lapply(ll, mean, na.rm=TRUE)
+  ```
++ 利用此函数可以简单的实现并行运算
+  ```
+  > library(parallel)
+  > results <- mclapply(my_samples,slowFunction)
+  也可以设置并行运算的核数
+  > options(cores=3)
+  > getOption('cores')
+  [1] 3
+  ```
 #### Writing functions
++ 可以自己写函数来应用于lapply()。
+  ```
+  一般函数的格式如图
+  fun_name <- function(args) {
+    # body, containing R expressions
+    return(value)
+  }
+  例如
+  > meanRemoveNA <- function(x) mean(x, na.rm=TRUE)
+  > lapply(ll, meanRemoveNA)
+  ```
 #### Digression: Debugging R Code
++ 函数是一种很好的功能，但是也很难debugging。但是掌握debug技巧是非常重要的。browser()是一种设置断点
+  的技巧。可以用于debug。
+  ```
+  function(x){
+   a <- 2
+   browser()
+   y <- x+a
+   return(y)
+  }
+  运行这个函数会让我们进入debug界面。在R的命令输入行输入ls()可以打印当前所有的变量,输入n可以执行下一行
+  ，输入c可以继续运行代码，输入Q可以退出并且继续运行代码。
+  ```
 #### More list apply functions: sapply() and mapply()
++ sapply()跟lapply()差不多，但是它返回的结果更加简单。
+  ```
+  > sapply(ll, function(x) mean(x,na.rm = TRUE))
+        a         b         c
+  0.7203142 3.8595975 5.8615159
+  ```
++ mapply()是sapply()的多变量版本，用法如下
+  ```
+  > ind_1 <- list(loci_1=c("T", "T"), loci_2=c("T", "G"), loci_3=c("C", "G"))
+  > ind_2 <- list(loci_1=c("A", "A"), loci_2=c("G", "G"), loci_3=c("C", "G"))
+  > mapply(function(a,b) length(intersect(a,b)), ind_1,ind_2)
+  loci_1 loci_2 loci_3
+     0      1      2
+  ```
++ 在R中还有matries,和arrays这两种数据结构，他们都是多维的R vector。我们通常是使用dataframe而不是这
+  两种数据类型，因为dataframe可以包含不同数据类型的列。他们也有自己的apply function。apply(),sweep()。
 ### Working with the Split-Apply-Combine Pattern
++ 
 ### Exploring Dataframes with dplyr
 ### Working with Strings
 ## Developing Workflows with R Scripts

@@ -814,9 +814,50 @@
   4  (51.6,68.5] 7.309941
   5  (68.5,85.6] 4.037698
   ```
-+ The take-home point of this section: the split-apply-combine pattern is an essential part of data analysis.
++ The take-home point of this section: the split-apply-combine pattern is an essential part of  data analysis.
 ### Exploring Dataframes with dplyr
++ dplyr包是专门处理dataframe数据类型的。速度非常快，因为他是用C++写的。其中有五个基础的函数用来操作
+  dataframe，arrange(), filter(), mutate(), select(), and summarize()。
++ 首先将dataframe转换为dplyr特有的tbl_df类型。
+  ```
+  > library(dplyr)
+  > d_df <- tbl_df(d)
+  从tbl_df类中挑选几列
+  > select(d_df, start, end, Pi, Recombination, depth)
+  也可以这样使用
+  > select(d_df, -(start:cent))
+  这样的话挑选出除了start和cent范围之外的所有列
+  也能使用filter()函数对数据的行进行筛选
+  > filter(d_df, Pi > 16, percent.GC > 80)
+  也能使用arrange函数对列进行排序。与d[order(d$percent.GC), ]功能相似
+  > arrange(d_df, depth)
+  也能通过集合desc函数来使用arrange函数进行降序排序
+  > arrange(d_df, desc(total.SNPs), desc(depth))
+  也能使用mutate函数来为dataframe添加新的列
+  > d_df <- select(d_df, -diversity) # remove our earlier diversity column
+  > d_df <- mutate(d_df, diversity = Pi/(10*1000))
+  ```
++ 通常使用dplyr包的时候，我们喜欢将这个包的一系列操作写为一个pipeline，就跟linux里的pipeline一样
+  只不过他的中间符号是%>%，其性质也与Linux中差不多。如下
+  ```
+  > d_df %>% mutate(GC.scaled=scale(percent.GC)) %>%
+  filter(GC.scaled>4,depth>4) %>%
+  select(start,end,depth,GC.scaled,percent.GC) %>%
+  arrange(desc(depth))
+  ```
++ dplyr’s raw power comes from the way it handles grouping and summarizing data.
+  ```
+  > mtfs_df <- tbl_df(mtfs)
+  来给上面的tbl_df分类
+  > mtfs_df %>% group_by(chr)
+  然后对分类后的数据进行summary
+  > mtfs_df %>%
+      group_by(chr) %>%
+      summarize(max_recom = max(recom), mean_recom = mean(recom), num=n())
+  ```
++ dplyr最好的特征是上面的方法能够直接在数据库连接中使用。
 ### Working with Strings
++ 
 ## Developing Workflows with R Scripts
 ### Control Flow: if, for, and while
 ### Working with R Scripts

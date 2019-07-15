@@ -666,6 +666,13 @@
 
   ```
 ### Using ggplot2 Facets
++ 使用facet_wrap()和facet_grid()可以对一个dataframe画出多个图，其中每个图可以设置为一个列的不同level。
+  ```
+  > p <- ggplot(mtfs, aes(x=dist, y=recom)) + geom_point(size=1, color="grey")
+  > p <- p + geom_smooth(method='loess', se=FALSE, span=1/16)
+  > p <- p + facet_grid(repeat_name ~ motif)
+  > print(p)
+  ```
 ### More R Data Structures: Lists
 ### Writing and Applying Functions to Lists with lapply() and sapply()
 #### Using lapply()

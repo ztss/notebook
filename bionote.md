@@ -527,7 +527,7 @@
   查看读入文件的维度。
   > colnames(d)
   查看读入文件的列名。
-  colnames(d)[12] <- "percent.GC"
+  > colnames(d)[12] <- "percent.GC"
   改变列名
   ```
 + 我们也可以将一系列的vector创建为data.frame
@@ -779,7 +779,42 @@
 + 在R中还有matries,和arrays这两种数据结构，他们都是多维的R vector。我们通常是使用dataframe而不是这
   两种数据类型，因为dataframe可以包含不同数据类型的列。他们也有自己的apply function。apply(),sweep()。
 ### Working with the Split-Apply-Combine Pattern
-+ 
++ Grouping data is a powerful method in exploratory data analysis.
++ 在这一节中，我们将学习如何使用通用的数据分析模式去分类数据，并且在每一个类上应用函数，然后将这些
+  结果结合起来。这个模式的名字叫做 split-apply-combine。
++ 过程
+  ```
+  将数据分开
+  d_split <- split(d$depth,d$GC.binned)
+  这个语句将d$depth这个vector按照GC.binned分开。并且返回一个list。
+  然后，对于这样的每个group就可以使用lapply()将一个函数应用于每一个group上。
+  > lapply(d_split, mean)
+  这一步也可以使用其他的方法，将结果输出为一个vector，如下两种
+  > sapply(d_split, mean)
+  > unlist(lapply(d_split, mean))
+  也可以将数据分开后，同时应用apply
+  > dpth_summ <- lapply(split(d$depth, d$GC.binned), summary)
+  最后，就是将这些结果整合到一起，同时使用do.call()和rbind
+  > do.call(rbind, lapply(split(d$depth, d$GC.binned), summary))
+  ```
++ split()函数有一些特性
+  1. First, it’s possible to group by more than one factor—just provide split() with a list of factors. split() will split the data by all combinations of these factors.
+  2. Second, you can unsplit a list back into its original vectors using the function unsplit().
+  3. although we split single columns of a dataframe (which are just vectors), split() will happily split dataframes. (将dataframe分类是非常有必要的，当我们的apply部分需要用到多个columns).
++ R中也有一些函数将上面的模式结合在一起，只需要一个函数即可。如下
+  ```
+  > tapply(d$depth, d$GC.binned, mean)
+  (0.716,17.7]  (17.7,34.7]  (34.7,51.6]  (51.6,68.5]  (68.5,85.6]
+    3.810000     8.788244     8.296699     7.309941     4.037698
+  > aggregate(d$depth, list(gc=d$GC.binned), mean)
+           gc        x
+  1 (0.716,17.7] 3.810000
+  2  (17.7,34.7] 8.788244
+  3  (34.7,51.6] 8.296699
+  4  (51.6,68.5] 7.309941
+  5  (68.5,85.6] 4.037698
+  ```
++ The take-home point of this section: the split-apply-combine pattern is an essential part of data analysis.
 ### Exploring Dataframes with dplyr
 ### Working with Strings
 ## Developing Workflows with R Scripts

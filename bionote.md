@@ -900,9 +900,9 @@
 ### Control Flow: if, for, and while
 + 前面说过，使用apply()系列的函数可以避免在R中使用loop，但是还是有一些情况不得不使用循环控制
   语句。
-  ```{r}
+  ```
   在for循环中，通常是创建一个索引Vector。
-  for (i in 1:length(vec)) { 
+  for (i in 1:length(vec)) {
     # do something
   }
   ```

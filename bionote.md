@@ -857,7 +857,45 @@
   ```
 + dplyr最好的特征是上面的方法能够直接在数据库连接中使用。
 ### Working with Strings
-+ 
++ R中所有的string都是character vector。
+  ```
+  使用nchar()查看string中字符的个数
+  使用grep(pattern, x)查找包含pattern的元素在x中的位置。
+  R中的grep可以使用Perl。如下
+  > chrs <- c("chrom6", "chr2", "chr6", "chr4", "chr1", "chr16", " chrom8")
+  > chrs[grep("[^\\d]6", chrs, perl=TRUE)]
+  [1] "chrom6" "chr6"
+  regexpr(pattern, x) returns where in each element of x it matched pattern.
+  > regexpr("[^\\d]6",chrs,perl = TRUE)
+  [1]  5 -1  3 -1 -1 -1 -1
+  attr(,"match.length")
+  [1]  2 -1  2 -1 -1 -1 -1
+  attr(,"index.type")
+  [1] "chars"
+  attr(,"useBytes")
+  [1] TRUE
+  我们可以利用下面的语句来整理chrs
+  > pos <- regexpr("\\d+",chrs,perl = TRUE)
+  [1] 6 4 4 4 4 4 7
+  attr(,"match.length")
+  [1] 1 1 1 1 1 2 1
+  attr(,"index.type")
+  [1] "chars"
+  attr(,"useBytes")
+  [1] TRUE
+  > substr(chrs,pos,pos+attributes(pos)$match.length)
+  [1] "6"  "2"  "6"  "4"  "1"  "16" "8" 
+  > sub(pattern="Watson", replacement="Watson, Franklin,", x="Watson and Crick discovered DNA's structure.")
+  [1] "Watson, Franklin, and Crick discovered DNA's structure."
+  ```
++ 在生物信息学中，解析不一致的命名是一项很需要花费时间的事情。
+  ```
+  使用strsplit()分隔字符串
+  > leafy <- "gene=LEAFY;locus=2159208;gene_model=AT5G61850.1"
+  > strsplit(leafy, ";")
+  [[1]]
+  [1] "gene=LEAFY" "locus=2159208" "gene_model=AT5G61850.1"
+  ```
 ## Developing Workflows with R Scripts
 ### Control Flow: if, for, and while
 ### Working with R Scripts

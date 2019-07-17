@@ -907,7 +907,70 @@
   }
   ```
 ### Working with R Scripts
-+
++ 可以使用source("my_rscript.R")来运行R script。
++ 使用sessioninfo()来查看R的版本以及每一个包的版本。
++ 也可以在命令行使用以下语句运行R脚本
+  ```
+  $ Rscript --vanilla my_rs.R
+  ```
 ### Workflows for Loading and Combining Multiple Files
++ 这一节我们学习如何loading和组合多个文件。使用这一功能需要用到我们之前学习到的一些函数：
+  apply(), do.call(), rbind(),sub().
+  ```
+  首先列出所有符合我们需要处理的文件
+  > list.files("hotspots",pattern = "hotspots.*\\.bed")
+  这里使用了正则表达式。
+  > hs_files <- list.files("hotspots", pattern="hotspots.*\\.bed", full.names=TRUE)
+  然后可以使用lapply()函数来处理着一些的文件
+  > bedcols <- c("chr", "start", "end")
+  > loadFile <- function(x) read.delim(x, header=FALSE, col.names=bedcols)
+  > hs <- lapply(hs_files, loadFile)
+  然后给hs的每一个list item取名字
+  > names(hs) <- list.files("hotspots", pattern="hotspots.*\\.bed")
+  然后将这些数据全部结合在一起。
+  > hsd <- do.call(rbind, hs)
+  这个时候hsd中的数据有行名，我们可以去掉行名
+  > row.names(hsd) <- NULL
+  ```
++ 我们也可以改变上面的loadFile函数。
+  ```
+  loadFile <- function(x) {
+    # read in a BED file, extract the chromosome name from the file,
+    # and add it as a column
+    df <- read.delim(x, header=FALSE, col.names=bedcols)
+    df$chr_name <- sub("hotspots_([^\\.]+)\\.bed", "\\1", basename(x))
+    使用basename(x)来取出非文件路径的文件名字
+    df$file <- x
+    df
+  }
+  或者这样改写loadFile
+  loadAndSummarizeFile <- function(x) {
+    df <- read.table(x, header=FALSE, col.names=bedcols)
+    data.frame(chr=unique(df$chr), n=nrow(df), mean_len=mean(df$end - df$start))
+  }
+  ```
 ### Exporting Data
++ 可以使用write.table()将dataframe导出为纯文本文件。
+  ```
+  > write.table(mtfs, file="hotspot_motifs.txt", quote=FALSE, sep="\t", row.names=FALSE, col.names=TRUE)
+  也可以先把文件压缩然后再写出
+  > hs_gzf <- gzfile("hotspot_motifs.txt.gz")
+  > write.table(mtfs, file=hs_gzf, quote=FALSE, sep="\t", row.names=FALSE, col.names=TRUE)
+  ```
+  但是R中也有一些对象不适合导出为纯文本文件。这个时候可以导出为Rdata文件
+  ```
+  > tmp <- list(vec=rnorm(4), df=data.frame(a=1:3, b=3:5))
+  > save(tmp, file="example.Rdata")
+  > rm(tmp) # remove the original 'tmp' list
+  > load("example.Rdata") # this fully restores the 'tmp' list from file
+  > str(tmp)
+  List of 2
+  $ vec: num [1:4] -0.668 -0.279 -0.717 0.052
+  $ df :'data.frame':	3 obs. of  2 variables:
+  ..$ a: int [1:3] 1 2 3
+  ..$ b: int [1:3] 3 4 5
+  ```
 ## Further R Directions and Resources
+
+
+# Working with Range Data

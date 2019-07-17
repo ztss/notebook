@@ -974,3 +974,28 @@
 
 
 # Working with Range Data
+
+## A Crash Course in Genomic Ranges and Coordinate Systems
+## An Interactive Introduction to Range Data with GenomicRanges
+### Installing and Working with Bioconductor Packages
+### Storing Generic Ranges with IRanges
+### Basic Range Operations: Arithmetic, Transformations, and Set Operations
+### Finding Overlapping Ranges
+### Finding Nearest Ranges and Calculating Distance
+### Run Length Encoding and Views
+#### Run-length encoding and coverage()
+#### Going from run-length encoded sequences to ranges with slice()
+#### Advanced IRanges: Views
+### Storing Genomic Ranges with GenomicRanges
+### Grouping Data with GRangesList
+### Working with Annotation Data: GenomicFeatures and rtracklayer
+### Retrieving Promoter Regions: Flank and Promoters
+### Retrieving Promoter Sequence: Connection GenomicRanges with Sequence Data
+### Getting Intergenic and Intronic Regions: Gaps, Reduce, and Setdiffs in Practice
+### Finding and Working with Overlapping Ranges
+### Calculating Coverage of GRanges Objects
+## Working with Ranges Data on the Command Line with BEDTools
+### Computing Overlaps with BEDTools Intersect
+### BEDTools Slop and Flank
+### Coverage with BEDTools
+### Other BEDTools Subcommands and pybedtools

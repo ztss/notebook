@@ -971,14 +971,26 @@
   ..$ b: int [1:3] 3 4 5
   ```
 ## Further R Directions and Resources
+
+
+# Working with Range Data
+## A Crash Course in Genomic Ranges and Coordinate Systems
 + 为了指定基因组区域或者位置，我们需要一些信息。比如说染色体名字，range，每一个range都有一个起始位置
   以及结束位置，第三个就是strand，因为染色体DNA是double-stranded。所以我们需要直到一些特性是处于
   那个strand上面的。
 + range是位于染色体上的。
-+ 不同的基因定位通常跟特定的参考基因组版本有关。
-# Working with Range Data
-## A Crash Course in Genomic Ranges and Coordinate Systems
++ 不同的基因定位通常跟特定的参考基因组版本有关。所以也有一些软件提供重新map到新基因组版本的功能。
++ 有两种range System
+  1. 0-based coordinate system, with half-closed, half-open intervals.这个系统中，sequence的第一个base是0，最后一个是-1。而且区间是[)这样的。
+  python使用的就是这种。这种系统可以很好的表达0长度的features。
+  2. 1-based coordinate system, with closed intervals.这个系统中，sequence的第一个为1，最后一个
+  就是长度的大小，他的区间是形如[]这样的。R使用的是这种。Format/library BED GTF GFF SAM BAM VCF BCF Wiggle
+  GenomicRanges BLAST GenBank/EMBL Feature Table Type 0-based 1-based 1-based 1-based 0-based 1-based
+  0-based 1-based 1-based 1-based 1-based。这是一些文件对应的range type。
++ 几乎所有的范围格式，范围的坐标在参考序列的正向链上给出，这是因为DNA是double strand。例如，
+  代表蛋白质编码区的范围仅在给定适当链的情况下才具有生物学意义。
 ## An Interactive Introduction to Range Data with GenomicRanges
+
 ### Installing and Working with Bioconductor Packages
 ### Storing Generic Ranges with IRanges
 ### Basic Range Operations: Arithmetic, Transformations, and Set Operations

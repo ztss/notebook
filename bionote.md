@@ -1031,8 +1031,46 @@
   ..@ metadata       : list()
   ```
 ### Basic Range Operations: Arithmetic, Transformations, and Set Operations
-+ 
++ IRanges对象可以使用算术运算符来scale。
+  ```
+  > x <- IRanges(start=c(40, 80), end=c(67, 114))
+  > x + 4L
+  也可以用一个bound来约束range的大小。
+  > y <- IRanges(start=c(4, 6, 10, 12), width=13)
+  > restrict(y,5,10)
+  IRanges object with 3 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]         5        10         6
+  [2]         6        10         5
+  [3]        10        10         1
+  可以看出只截取了在5到10范围的基因。
+  另外还可以使用flank()来返回一个region边缘的range。
+  > x
+  IRanges object with 2 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]        40        67        28
+  [2]        80       114        35
+  > flank(x,width=7)
+  IRanges object with 2 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]        33        39         7
+  [2]        73        79         7
+  通过设置start=false也可以取区域的另一边
+  > flank(x,width=7,start=FALSE)
+  IRanges object with 2 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]        68        74         7
+  [2]       115       121         7
+  还可以使用reduce函数将所有重叠的range整合在一起
+  也可以使用gap()函数来返回range之间的gaps。
+  IRanges对象也可以使用集合运算，即交集之类的。
+  ```
 ### Finding Overlapping Ranges
++ 
 ### Finding Nearest Ranges and Calculating Distance
 ### Run Length Encoding and Views
 #### Run-length encoding and coverage()

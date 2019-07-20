@@ -971,10 +971,12 @@
   ..$ b: int [1:3] 3 4 5
   ```
 ## Further R Directions and Resources
-
-
++ 为了指定基因组区域或者位置，我们需要一些信息。比如说染色体名字，range，每一个range都有一个起始位置
+  以及结束位置，第三个就是strand，因为染色体DNA是double-stranded。所以我们需要直到一些特性是处于
+  那个strand上面的。
++ range是位于染色体上的。
++ 不同的基因定位通常跟特定的参考基因组版本有关。
 # Working with Range Data
-
 ## A Crash Course in Genomic Ranges and Coordinate Systems
 ## An Interactive Introduction to Range Data with GenomicRanges
 ### Installing and Working with Bioconductor Packages

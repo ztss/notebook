@@ -989,11 +989,49 @@
   0-based 1-based 1-based 1-based 1-based。这是一些文件对应的range type。
 + 几乎所有的范围格式，范围的坐标在参考序列的正向链上给出，这是因为DNA是double strand。例如，
   代表蛋白质编码区的范围仅在给定适当链的情况下才具有生物学意义。
-## An Interactive Introduction to Range Data with GenomicRanges
-
+## An Interactive Introduction to Range Data with Genomic Ranges
 ### Installing and Working with Bioconductor Packages
++ 使用包的语句
+  ```
+  > source("http://bioconductor.org/biocLite.R")
+  > biocLite()
+  ```
 ### Storing Generic Ranges with IRanges
++ 在处理生物学数据的时候，我们应该考虑如何引入range这个概念。
++ The purpose of the first part of this chapter is to teach you range thinking through the use
+  of use Bioconductor’s IRanges package。下面是如何使用IRanges。
+  ```
+  > library(IRanges)
+  可以使用这个包创建一个Irange对象。
+  > rng <- IRanges(start=4, end=13)
+  > rng
+  IRanges of length 1
+      start end width
+  [1] 4 13 10
+  也可以用vector来创建
+  > x <- IRanges(start=c(4, 7, 2, 20), end=c(13, 7, 5, 23))
+  > x
+  IRanges object with 4 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]         4        13        10
+  [2]         7         7         1
+  [3]         2         5         4
+  [4]        20        23         4
+  也可以为range取个名字。
+  > names(x) <- letters[1:4]
+  使用以下语句查看类
+  > str(x)
+  Formal class 'IRanges' [package "IRanges"] with 6 slots
+  ..@ start          : int [1:4] 4 7 2 20
+  ..@ width          : int [1:4] 10 1 4 4
+  ..@ NAMES          : chr [1:4] "a" "b" "c" "d"
+  ..@ elementType    : chr "ANY"
+  ..@ elementMetadata: NULL
+  ..@ metadata       : list()
+  ```
 ### Basic Range Operations: Arithmetic, Transformations, and Set Operations
++ 
 ### Finding Overlapping Ranges
 ### Finding Nearest Ranges and Calculating Distance
 ### Run Length Encoding and Views

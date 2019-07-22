@@ -1135,10 +1135,140 @@
   上面的函数返回query上重叠的样本数目，只输出不同的。
   ```
 ### Finding Nearest Ranges and Calculating Distance
++ 这章主要介绍三个函数,nearest(),precede(),follow()。
+  ```
+  > qry <- IRanges(start=6, end=13, name='query')
+  > sbj <- IRanges(start=c(2, 4, 18, 19), end=c(4, 5, 21, 24), names=1:4)
+  nearest返回query离subject中最近的range索引。
+  > nearest(qry, sbj)
+  [1] 2
+  precede返回query在subject中下一个range的索引，follow则是上一个
+  > precede(qry, sbj)
+  [1] 3
+  > follow(qry, sbj)
+  [1] 1
+  query也可以是一系列的range。
+  > qry2 <- IRanges(start=c(6, 7), width=3)
+  > nearest(qry2, sbj)
+  [1] 2 2
+  ```
++ distance和distanceToNearest分别返回每对(一一对应)range之间的距离和query离subject中range的
+  最近距离。
+  ```
+  qry <- IRanges(sample(seq_len(1000), 5), width=10)
+  sbj <- IRanges(sample(seq_len(1000), 5), width=10)
+  > distanceToNearest(qry, sbj)
+  > distance(qry, sbj)
+  ```
 ### Run Length Encoding and Views
++ 在这一节中，我们主要使用coverage data。
 #### Run-length encoding and coverage()
++ 一般数据很大，我们首先需要压缩
+  ```
+  > x <- as.integer(c(4, 4, 4, 3, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4))
+  > xrle <- Rle(x)
+  > xrle
+  > xrle
+  integer-Rle of length 28 with 7 runs
+  Lengths: 3 2 1 5 7 3 7
+  Values : 4 3 2 1 0 1 4
+  > as.vector(xrle)
+  [1] 4 4 4 3 3 2 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 4 4 4 4 4 4 4
+  上面的Rle类支持这些操作：subsetting, arithemetic and comparison operations, summary functions, and math functions。
+  而可以使用以下函数访问Rle类的长度和值
+  > runLength(xrle)
+  [1] 3 2 1 5 7 3 7
+  > runValue(xrle)
+  [1] 4 3 2 1 0 1 4
+  ```
++ 计算一系列range的coverage。
+  ```
+  > set.seed(0)
+  > rngs <- IRanges(start=sample(seq_len(60), 10), width=7)
+  > names(rngs)[9] <- "A" # label one range for examples later
+  > rngs_cov <- coverage(rngs)
+  > rngs_cov
+  integer-Rle of length 63 with 18 runs
+     Lengths: 11 4 3 3 1 6 4 2 5 2 7 2 3 3 1 3 2 1
+     Values : 0 1 2 1 2 1 0 1 2 1 0 1 2 3 4 3 2 1
+  ```
+  coverage:For each position in the space underlying a set of ranges, counts the number of ranges that cover it.即计算坐标系上每一个position上有几个range。
+  这里返回的coverage就是一个Rle类。
+  ```
+  > rngs_cov > 3 # where is coverage greater than 3?
+  logical-Rle of length 63 with 3 runs
+    Lengths:56 1 6
+    Values : FALSE TRUE FALSE
+  > rngs_cov[as.vector(rngs_cov) > 3] # extract the depths that are greater than 3
+  integer-Rle of length 1 with 1 run
+  Lengths: 1
+  Values : 4
+  也可以使用labels来访问Rle对象
+  > rngs_cov[rngs['A']]
+  integer-Rle of length 7 with 2 runs
+  Lengths: 5 2
+  Values : 2 1
+  ```
 #### Going from run-length encoded sequences to ranges with slice()
++ 可以用slice函数以Rle(run-length encoded)对象为参数构造ranges。
+  ```
+  > min_cov2 <- slice(rngs_cov,lower = 2)
+  > min_cov2
+  Views on a 66-length Rle subject
+
+  views:
+      start end width
+  [1]     4   7     4 [2 2 2 2]
+  [2]    18  20     3 [2 2 2]
+  [3]    23  24     2 [2 2]
+  [4]    39  40     2 [2 2]
+  [5]    43  45     3 [2 2 2]
+  [6]    60  63     4 [2 2 2 2]
+  ```
 #### Advanced IRanges: Views
++ 使用一些统计函数来表示我们使用slice函数输出得到的view object。
+  ```
+  > viewMeans(min_cov2)
+  > viewMaxs(min_cov2)
+  > viewApply(min_cov2, median)
+  ```
++ 我们将我们的region分为一个一个等分的窗口，然后分别计算窗口中每一个position的coverage。
+  步骤如下
+  ```
+  > rngs_cov
+  integer-Rle of length 66 with 19 runs
+  Lengths: 3 4 3 3 4 3 2 2 5 4 5 2 2 3 4 7 3 4 3
+  Values : 1 2 1 0 1 2 1 2 1 0 1 2 1 2 1 0 1 2 1
+  > length(rngs_cov)
+  [1] 66
+  > bwidth <- 5L
+  > end <- bwidth * floor(length(rngs_cov) / bwidth)
+  > windows <- IRanges(start=seq(1, end, bwidth), width=bwidth)
+  > head(windows)
+  IRanges object with 6 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1]         1         5         5
+  [2]         6        10         5
+  [3]        11        15         5
+  [4]        16        20         5
+  [5]        21        25         5
+  [6]        26        30         5
+  > cov_by_wnd <- Views(rngs_cov, windows)
+  > head(cov_by_wnd)
+  Views on a 66-length Rle subject
+
+  views:
+    start end width
+  [1]     1   5     5 [1 1 1 2 2]
+  [2]     6  10     5 [2 2 1 1 1]
+  [3]    11  15     5 [0 0 0 1 1]
+  [4]    16  20     5 [1 1 2 2 2]
+  [5]    21  25     5 [1 1 2 2 1]
+  [6]    26  30     5 [1 1 1 1 0]
+  ```
+  接下来我们会介绍GenomicRanges，因为这个是在IRange上扩展形成的，所以我们上面所学习的应用于IRange
+  上的功能也能直接应用于GRanges上。
 ### Storing Genomic Ranges with GenomicRanges
 ### Grouping Data with GRangesList
 ### Working with Annotation Data: GenomicFeatures and rtracklayer

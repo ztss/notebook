@@ -1070,7 +1070,70 @@
   IRanges对象也可以使用集合运算，即交集之类的。
   ```
 ### Finding Overlapping Ranges
-+ 
++ 计算重叠在生物信息学中十分重要。一般我们使用findOverlaps()函数来寻找重叠。
+  ```
+  > qry <- IRanges(start=c(1, 26, 19, 11, 21, 7), end=c(16, 30, 19, 15, 24, 8), names=letters[1:6])
+  > sbj <- IRanges(start=c(1, 19, 10), end=c(5, 29, 16), names=letters[24:26])
+  > hts <- findOverlaps(qry,sbj)
+  > names(qry)[queryHits(hts)]
+  [1] "a" "a" "b" "c" "d" "e"
+  > names(sbj)[subjectHits(hts)]
+  [1] "x" "z" "y" "y" "z" "y"
+  ```
+  我们将重叠表示为query和subject之间的映射。这是一个多对多的映射，上面的hts中的列即为这个映射
+  之间的对应关系。
+  我们也可以只查找query整个被包含在subject中的重叠。
+  ```
+  > hts_within <- findOverlaps(qry, sbj, type="within")
+  ```
+  也可以在findOverlaps中添加select参数来选择返回第几个重叠匹配。
+  ```
+  > findOverlaps(qry, sbj, select="first")
+  [1] 1 2 2 3 2 NA
+  > findOverlaps(qry, sbj, select="last")
+  [1] 3 2 2 3 2 NA
+  > findOverlaps(qry, sbj, select="arbitrary")
+  [1] 1 2 2 3 2 NA
+  ```
++ 根据上面的分析，我们寻找query在subject上的重叠的复杂度是蛮高的，所以为了简化算法，我们使用
+  interval tree这种数据结构
+  ```
+  我们可以使用IRange对象来创建IntervalTree，但是现有的版本使用NCList替代了原有的interval tree。
+  > sbj_it <- NCList(sbj)
+  NCList object with 3 ranges and 0 metadata columns:
+        start       end     width
+    <integer> <integer> <integer>
+  x         1         5         5
+  y        19        29        11
+  z        10        16         7
+  然后使用优化后的数据结构来使用findOverlaps
+  > findOverlaps(qry,sbj_it)
+  可以使用以下语句将结果转化为矩阵
+  > as.matrix(hts)
+  可以使用以下语句查看每一个query和多少个subject重叠了
+  > countQueryHits(hts)
+  [1] 2 1 1 1 1 0
+  > setNames(countQueryHits(hts), names(qry))
+  a b c d e f
+  2 1 1 1 1 0
+  也可以使用以下语句来查看有多少个subject和query重叠了
+  > countSubjectHits(hts)
+  使用ranges()函数输出每个重叠部分的坐标
+  > ranges(hts, qry, sbj)
+  > countOverlaps(qry, sbj)
+  a b c d e f
+  2 1 1 1 1 0
+  > subsetByOverlaps(qry, sbj)
+  IRanges object with 5 ranges and 0 metadata columns:
+        start       end     width
+    <integer> <integer> <integer>
+  a         1        16        16
+  b        26        30         5
+  c        19        19         1
+  d        11        15         5
+  e        21        24         4
+  上面的函数返回query上重叠的样本数目，只输出不同的。
+  ```
 ### Finding Nearest Ranges and Calculating Distance
 ### Run Length Encoding and Views
 #### Run-length encoding and coverage()

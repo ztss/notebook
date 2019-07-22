@@ -1270,8 +1270,113 @@
   接下来我们会介绍GenomicRanges，因为这个是在IRange上扩展形成的，所以我们上面所学习的应用于IRange
   上的功能也能直接应用于GRanges上。
 ### Storing Genomic Ranges with GenomicRanges
++ GenomicRanges包引进了一个新的Granges类，比IRanges类多了两个信息：sequence name，和 strand。
+  ```
+  创建一个GRanges对象
+  library(GenomicRanges)
+  > gr <- GRanges(seqname=c("chr1", "chr1", "chr2", "chr3"),ranges = IRanges(start = 5:8,width = 10),strand = c("+", "-", "-", "+"))
+  > gr
+  GRanges object with 4 ranges and 0 metadata columns:
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chr1      5-14      +
+  [2]     chr1      6-15      -
+  [3]     chr2      7-16      -
+  [4]     chr3      8-17      +
+  -------
+  seqinfo: 3 sequences from an unspecified genome; no seqlengths
+  也可以为GRanges构造器指定sequence length。
+  > seqlens <- c(chr1=152, chr2=432, chr3=903)
+  > gr <- GRanges(seqname=c("chr1", "chr1", "chr2", "chr3"), ranges=IRanges(start=5:8, width=10), strand=c("+", "-", "-", "+"),gc=round(runif(4), 3), seqlengths=seqlens)
+  可以使用下面的语句访问GRanges中的数据
+  > start(gr)
+  [1] 5 6 7 8
+  > end(gr)
+  [1] 14 15 16 17
+  > width(gr)
+  [1] 10 10 10 10
+  > seqnames(gr)
+  > strand(gr)
+  上面两个函数返回的都是 run-length encoded 对象。如果我们想要提取GRanges中的IRanges对象
+  > ranges(gr)
+  可以查看GRanges的长度，以及为它命名
+  > length(gr)
+  [1] 4
+  > names(gr) <- letters[1:length(gr)]
+  GRanges也支持子集操作。
+  > start(gr) > 7
+  [1] FALSE FALSE FALSE TRUE
+  > gr[start(gr) > 7]
+  使用以下语句可以统计每个chromosome有多少个ranges
+  > table(seqnames(gr))
+
+  chr1 chr2 chr3
+   2    1    1
+  可以通过访问染色体名字取得每个染色体的GRanges的子集
+  > gr[seqnames(gr) == "chr1"]
+  使用以下语句可以访问metadata columns
+  > mcols(gr)
+  DataFrame with 4 rows and 1 column
+       gc
+    <numeric>
+  a     0.206
+  b     0.177
+  c     0.687
+  d     0.384
+  上面返回的是dataframe，所以也可以使用$访问数据
+  > mcols(gr)$gc
+  [1] 0.897 0.266 0.372 0.573
+  > gr$gc
+  [1] 0.897 0.266 0.372 0.573
+  可以计算chr1所有ranges的average GC content
+  > mcols(gr[seqnames(gr) == "chr1"])$gc
+  [1] 0.897 0.266
+  > mean(mcols(gr[seqnames(gr) == "chr1"])$gc)
+  [1] 0.5815
+  ```
 ### Grouping Data with GRangesList
++ 使用GRangesList将数据分组
+  ```
+  创建GRangesList
+  > gr1 <- GRanges(c("chr1", "chr2"), IRanges(start=c(32, 95), width=c(24, 123)))
+  > gr2 <- GRanges(c("chr8", "chr2"), IRanges(start=c(27, 12), width=c(42, 34)))
+  > grl <- GRangesList(gr1, gr2)
+  ```
+  GRangesList于list的性质类似。
+  使用unlist可以将GRangesList中的元素结合到一个单独的GRanges对象中(much like unlisting an R list of vectors to create one long vector)。
+  ```
+  > unlist(grl)
+  ```
+  也能使用c()函数将多个GRangesList对象组合起来
+  跟访问list对象一样，也可以使用list element names函数来访问GRangesList对象中的features。
+  在R中有很多由不同对象组成的list,他们的性质都与原始的list差不多。
+  通过seqnames对GRanges对象分组
+  ```
+  > chrs <- c("chr3", "chr1", "chr2", "chr2", "chr3", "chr1")
+  > gr <- GRanges(chrs, IRanges(sample(1:100, 6, replace=TRUE), width=sample(3:30, 6, replace=TRUE)))
+  > gr_split <- split(gr, seqnames(gr))
+  > names(gr_split)
+  [1] "chr3" "chr1" "chr2"
+  得到的gr_split是GRangesList对象
+  ```
+  也可以使用下列语句还原
+  ```
+  > unsplit(gr_split, seqnames(gr))
+  ```
+  上面将GRanges对象变为不同组的GRangesList对象就可以将函数应用于不同的分组上。即使用lapply()或者
+  sapply()函数
+  ```
+  > lapply(gr_split, function(x) order(width(x)))
+  > sapply(gr_split, function(x) min(start(x)))
+  > sapply(gr_split, length)
+  ```
+  也可以直接将overlap函数应用于GRangesList上
+  ```
+  > reduce(gr_split)
+  ```
+  这说明GRangesList对象的一个重要的性质：many methods applied to GRangesList objects work at the grouped-data level automatically。
 ### Working with Annotation Data: GenomicFeatures and rtracklayer
++
 ### Retrieving Promoter Regions: Flank and Promoters
 ### Retrieving Promoter Sequence: Connection GenomicRanges with Sequence Data
 ### Getting Intergenic and Intronic Regions: Gaps, Reduce, and Setdiffs in Practice

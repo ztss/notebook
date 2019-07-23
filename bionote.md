@@ -1379,11 +1379,89 @@
 + 这一小节介绍两个package。
      1. GenomicFeatures, is designed for working with transcript-based genomic annotations.
      2. rtracklayer, is designed for importing and exporting annotation data into a variety of different formats.
-+ 
++ 下面介绍GenomicFeatures使用
+  ```
+  安装包
+  > BiocManager::install("GenomicFeatures")
+  > BiocManager::install("TxDb.Mmusculus.UCSC.mm10.ensGene")
+  我们需要注意所有的transcript annotation packages使用的命名方式是这样的
+  TxDb.<organism>.<annotation-source>.<annotation-version>
+  载入数据
+  > library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+  > txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
+  > mm_genes <- genes(txdb)
+  mm_genes是一个GRanges对象。
+  > mm_exons_by_tx <- exonsBy(txdb, by="tx")
+  > mm_exons_by_gn <- exonsBy(txdb, by="gene")
+  还有其他的提取transcriptDB对象中数据的函数，比如说transcriptsBy(), exonsBy(), cdsBy(), intronsBy(), fiveUTRsByTranscript(), and threeUTRsByTranscript()。这些函数是在GenomicFeatures
+  包中的。
+  ```
++ 然后我们介绍如何Creating TranscriptDb Objects。可以从数据库中创建transcriptDb对象，通过使用
+  TranscriptDbFromUCSC() and makeTranscriptDbFromBiomart()函数。或者通过Gene Transfer Format (GTF) or Gene Feature Format (GFF) file 使用makeTranscriptDbFromGFF()函数来创建transcriptDb
+  对象。
+  ```
+  ##create transcriptDb object
+  > library("GenomicFeatures")
+  > library("biomaRt")
+  > species <- "oanatinus_gene_ensembl"
+  > platypus_txdb <- makeTxDbFromBiomart("ensembl",species)
+  ```
++ rtracklayer包里提供了import和export函数(stores ranges from a variety of formats like GTF/GFF,
+  BED, BED Graph, and Wiggle)。
+  ```
+  > library("rtracklayer")
+  > mm_gtf <- import('Mus_musculus.GRCm38.75_chr1.gtf.gz')
+  imports all data as a GRanges object
+  这个包里也提供export函数，将range数据存为common range formats。
+  > set.seed(0)
+  > pseudogene_i <- which(mm_gtf$gene_biotype == "pseudogene" & mm_gtf$type == "gene")
+  > pseudogene_sample <- sample(pseudogene_i, 5)
+  > export(mm_gtf[pseudogene_sample], con="five_random_pseudogene.gtf", format="GTF")
+  ```
+  如果我们不关心这些范围的细节，那么我们最好将数据存入BED格式中。BED格式至少需要三列：chromosomes (or sequence name), start position, and end position (sometimes called the BED3 format).
+  ```
+  > bed_data <- mm_gtf[pseudogene_sample]
+  > mcols(bed_data) <- NULL # clear out metadata columns
+  > export(bed_data, con="five_random_pseudogene.bed", format="BED")
+  ```
 ### Retrieving Promoter Regions: Flank and Promoters
++ 这里我们使用上一节从rtracklayer包中引入的mm_gtf数据
+  ```
+  首先我们找到我们感兴趣的基因的子集
+  > table(mm_gtf$gene_biotype)
+  > chr1_pcg <- mm_gtf[mm_gtf$type=="gene" & mm_gtf$gene_biotype == "protein_coding"]
+  > chr1_pcg_3kb_up <- flank(chr1_pcg,width = 3000)
+  > chr1_pcg_3kb_up2 <- promoters(chr1_pcg, upstream=3000, downstream=0)
+  ```
 ### Retrieving Promoter Sequence: Connection GenomicRanges with Sequence Data
++ 这一节我们主要grab the promoter nucleotide sequences from a genome。
+  ```
+  首先，载入数据
+  > BiocManager::install("BSgenome.Mmusculus.UCSC.mm10")
+  > library(BSgenome.Mmusculus.UCSC.mm10)
+  > mm_gm <- BSgenome.Mmusculus.UCSC.mm10
+  > organism(mm_gm)
+  [1] "Mus musculus"
+  > providerVersion(mm_gm)
+  [1] "mm10"
+  > provider(mm_gm)
+  [1] "UCSC"
+  ```
 ### Getting Intergenic and Intronic Regions: Gaps, Reduce, and Setdiffs in Practice
++ 这一节主要为了获得基因之间和内含子区域
+  ```
+  > gr2 <- GRanges(c("chr1", "chr2"), IRanges(start=c(4, 12), width=6), strand=c("+", "-"), seqlengths=c(chr1=21, chr2=41))
+  > gr2
+  GRanges object with 2 ranges and 0 metadata columns:
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chr1       4-9      +
+  [2]     chr2     12-17      -
+  -------
+  seqinfo: 2 sequences from an unspecified genome
+  ```
 ### Finding and Working with Overlapping Ranges
++ 
 ### Calculating Coverage of GRanges Objects
 ## Working with Ranges Data on the Command Line with BEDTools
 ### Computing Overlaps with BEDTools Intersect

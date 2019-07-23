@@ -1376,7 +1376,10 @@
   ```
   这说明GRangesList对象的一个重要的性质：many methods applied to GRangesList objects work at the grouped-data level automatically。
 ### Working with Annotation Data: GenomicFeatures and rtracklayer
-+
++ 这一小节介绍两个package。
+     1. GenomicFeatures, is designed for working with transcript-based genomic annotations.
+     2. rtracklayer, is designed for importing and exporting annotation data into a variety of different formats.
++ 
 ### Retrieving Promoter Regions: Flank and Promoters
 ### Retrieving Promoter Sequence: Connection GenomicRanges with Sequence Data
 ### Getting Intergenic and Intronic Regions: Gaps, Reduce, and Setdiffs in Practice

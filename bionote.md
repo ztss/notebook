@@ -1474,3 +1474,13 @@
 ### Coverage with BEDTools
 + $ bedtools genomecov -i ranges-cov.bed -g cov.txt
 ### Other BEDTools Subcommands and pybedtools
+
+
+# Working with Sequence Data
+## The FASTA Format
+## The FASTQ Format
+## Nucleotide Codes
+## Base Qualities
+## Example: Inspecting and Trimming Low-Quality Bases
+## A FASTA/FASTQ Parsing Example: Counting Nucleotides
+## Indexed FASTA Files

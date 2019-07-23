@@ -1461,10 +1461,16 @@
   seqinfo: 2 sequences from an unspecified genome
   ```
 ### Finding and Working with Overlapping Ranges
-+ 
++ Finding and counting overlaps are probably the most important operations in working with
+  GRanges objects and ranges in general.
 ### Calculating Coverage of GRanges Objects
 ## Working with Ranges Data on the Command Line with BEDTools
 ### Computing Overlaps with BEDTools Intersect
++ 使用bedtools2寻找overlap
+  ```
+  $ bedtools intersect -a ranges-qry.bed -b ranges-sbj.bed
+  ```
 ### BEDTools Slop and Flank
 ### Coverage with BEDTools
++ $ bedtools genomecov -i ranges-cov.bed -g cov.txt
 ### Other BEDTools Subcommands and pybedtools

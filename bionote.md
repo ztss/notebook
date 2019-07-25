@@ -1478,9 +1478,25 @@
 
 # Working with Sequence Data
 ## The FASTA Format
++ 这一节我们主要介绍FASTA文件的细节。FASTA文件包含描述和序列数据。描述行以>开头，包含了序列识别码，然后
+  接着sequence data。fasta文件的格式不尽相同，主要体现在描述上。description的种类有很多。不过
+  我们也有一些描述的通用的格式：>gene_00284728 length=231;type=dna。
 ## The FASTQ Format
++ FASTQ相比于fasta文件多了一个数据质量分数针对每一个base。一般格式如下
+  ```
+  @DJB775P1:248:D0MDGACXX:7:1202:12362:49613 TGCTTACTCTGCGTTGATACCACTGCTTAGATCGGAAGAGCACACGTCTGAA
+  +
+  JJJJJIIJJJJJJHIHHHGHFFFFFFCEEEEEDBD?DDDDDDBDDDABDDCA @DJB775P1:248:D0MDGACXX:7:1202:12782:49716 CTCTGCGTTGATACCACTGCTTACTCTGCGTTGATACCACTGCTTAGATCGG
+  +
+  IIIIIIIIIIIIIIIHHHHHHFFFFFFEECCCCBCECCCCCCCCCCCCCCCC
+  首先是描述行，以@开头。然后是sequence data，一般会有一行或者多行，然后是+号，标注sequence data的结尾。然后是quality data，和sequence data长度一样。
+  ```
 ## Nucleotide Codes
++ standards for encoding nucleotides and base quality scores in these formats.
 ## Base Qualities
 ## Example: Inspecting and Trimming Low-Quality Bases
 ## A FASTA/FASTQ Parsing Example: Counting Nucleotides
 ## Indexed FASTA Files
++ In this section, we’ll look at how indexed FASTA files allow us to quickly and easily
+  extract subsequences。
++ 使用samtools为文件添加index。

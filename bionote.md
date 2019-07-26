@@ -1500,3 +1500,26 @@
 + In this section, we’ll look at how indexed FASTA files allow us to quickly and easily
   extract subsequences。
 + 使用samtools为文件添加index。
+
+
+# Working with Alignment Data
+## Getting to Know Alignment Formats: SAM and BAM
+### The SAM Header
+### The SAM Alignment Section
+### Bitwise Flags
+### CIGAR Strings
+### Mapping Qualities
+## Command-Line Tools for Working with Alignments in the SAM Format
+### Using samtools view to Convert between SAM and BAM
+### Samtools Sort and Index
+### Extracting and Filtering Alignments with samtools view
+#### Extracting alignments from a region with samtools view
+#### Filtering alignments with samtools view
+## Visualizing Alignments with samtools tview and the Integrated Genomics Viewer
+### Pileups with samtools pileup, Variant Calling, and Base Alignment Quality
+## Creating Your Own SAM/BAM Processing Tools with Pysam
+### Opening BAM Files, Fetching Alignments from a Region, and Iterating Across Reads
+### Extracting SAM/BAM Header Information from an AlignmentFile Object
+### Working with AlignedSegment Objects
+### Writing a Program to Record Alignment Statistics
+### Additional Pysam Features and Other SAM/BAM APIs

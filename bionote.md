@@ -1503,6 +1503,8 @@
 
 
 # Working with Alignment Data
++ 这一节主要关注SAM文件(Sequence Alignment Mapping)。这种格式的文件主要为了存储映射到reference
+  的sequence read。
 ## Getting to Know Alignment Formats: SAM and BAM
 ### The SAM Header
 ### The SAM Alignment Section

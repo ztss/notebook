@@ -1563,3 +1563,23 @@
 ### Writing a Program to Record Alignment Statistics
 + 我们可以使用AlignmentSegment对象来写一个从sam文件中收集比对统计数据的程序。
 ### Additional Pysam Features and Other SAM/BAM APIs
+
+
+# Bioinformatics Shell Scripting, Writing Pipelines, and Parallelizing Tasks
+## Basic Bash Scripting
+### Writing and Running Robust Bash Scripts
+#### A robust Bash header
+#### Running Bash scripts
+### Variables and Command Arguments
+#### Command-line arguments
+### Conditionals in a Bash Script: if Statements
+### Processing Files with Bash Using for Loops and Globbing
+## Automating File-Processing with find and xargs
+### Using find and xargs
+### Finding Files with find
+### find’s Expressions
+### find’s -exec: Running Commands on find’s Results
+### xargs: A Unix Powertool
+### Using xargs with Replacement Strings to Apply Commands to Files
+### xargs and Parallelization
+## Make and Makefiles: Another Option for Pipelines

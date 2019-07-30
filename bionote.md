@@ -1507,10 +1507,47 @@
   的sequence read。
 ## Getting to Know Alignment Formats: SAM and BAM
 ### The SAM Header
++ 我们首先得了解sam文件得格式，一般sam文件的头部格式如下
+  ```
+  $ head -n 10 celegans.sam
+  @SQ SN:I LN:15072434
+  @SQ SN:II LN:15279421
+  @SQ SN:III LN:13783801
+  @SQ SN:IV LN:17493829
+  @SQ SN:MtDNA
+  LN:13794
+  @SQ SN:V LN:20924180
+  @SQ SN:X LN:17718942
+  @RG ID:VB00023_L001 SM:celegans-01
+  @PG ID:bwa PN:bwa VN:0.7.10-r789 [...]
+  I_2011868_2012306_0:0:0_0:0:0_2489 83 I 2012257 40 50M [...]
+  ```
+  sq头部存储reference sequences，然后sn就是sequence name，LN就是sequence length，RG则是
+  read group和sample metadata。RG对应的ID必须是唯一的，PG包含程序的元数据，这些程序是用来
+  创建和处理一系列的SAM/BAM文件的。每一个程序都必须包含一个唯一的ID。和一个版本号即VN，和明确
+  的命令行CL。
 ### The SAM Alignment Section
++ 我们使用以下语句来查看一个sam文件
+  ```
+  $ samtools view celegans.sam | tr '\t' '\n' | head -n 11
+  I_2011868_2012306_0:0:0_0:0:0_2489  -1
+  83 -2
+  I  -3
+  2012257  -4
+  40  -5
+  50M  -6
+  =  -7
+  2011868
+  -439  -8
+  CAAAAAATTTTGAAAAAAAAAATTGAATAAAAATTCACGGATTTCTGGCT  -9 22222222222222222222222222222222222222222222222222  -10
+  ```
+  上面的第一部分是query name，第二部分是FLAG，包含alignment的信息。第三部分是RNAME，即
+  reference name。第四部分是position，the position on the reference sequence (using 1-based indexing) of the first mapping base (leftmost) in the query sequence. This may be zero if the read does not align.第五部分是MAPQ，即mapping quality。这是衡量读取实际来自其映射位置的可能性
+  的度量。第六部分是CIGAR是CIGAR string。第七部分是RNEXT。第八部分是TLEN是template length for paired-end reads。第九部分是SEQ存储原始读数序列。第十部分是QUAL存储原始读数base quality。
 ### Bitwise Flags
 ### CIGAR Strings
 ### Mapping Qualities
++ 可以使用mapping qualities来过滤一些看起来不对的比对。
 ## Command-Line Tools for Working with Alignments in the SAM Format
 ### Using samtools view to Convert between SAM and BAM
 ### Samtools Sort and Index
@@ -1524,4 +1561,5 @@
 ### Extracting SAM/BAM Header Information from an AlignmentFile Object
 ### Working with AlignedSegment Objects
 ### Writing a Program to Record Alignment Statistics
++ 我们可以使用AlignmentSegment对象来写一个从sam文件中收集比对统计数据的程序。
 ### Additional Pysam Features and Other SAM/BAM APIs

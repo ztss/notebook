@@ -1568,14 +1568,248 @@
 # Bioinformatics Shell Scripting, Writing Pipelines, and Parallelizing Tasks
 + pipeline对于我们日常的工作十分重要，所以必须要求鲁棒性和可重复性。
 ## Basic Bash Scripting
-
++ Bash是一种功能完善的脚本语言。他将许多命令行连接在一起以形成工作流。
 ### Writing and Running Robust Bash Scripts
 #### A robust Bash header
++ 可以用文本编辑器来创建.sh脚本。一般脚本的头部应该这样写
+  ```
+  #!/bin/bash
+  set -e
+  set -u
+  set -o pipefail
+  ```
+  上面语句的第一行称为shebang,它指出了执行脚本的解释器的path。这是必不可少的。
+  一般shell脚本如果有一个命令失败运行了，那么就会执行下一条，但是我们希望能够得到错误信息，
+  所以为了阻止命令失败后的运行就需要使用 set -e。这条语句的原理是根据命令返回的exit status
+  是否非0来判断的。但是它会忽略if语句nonzero status。
+  set -u可以阻止脚本运行中的一类比较常见的错误，比如说脚本会在没有设定变量名字的手仍然运行。
+  set -o pipefail适用于的情况为：当set -e不适用于管道命令时，即当有一个管道命令，只要最后一个
+  子命令运行成功，那么即使前面的命令时非法。那么整个管道命令也能够执行，这个时候 set -e就没有
+  作用了，所以我们设置set -o pipefail来避免这种情况。即管道命令只要有一个子命令失败那么即使
+  最后一个子命令成功也不会运行。
 #### Running Bash scripts
++ 运行Bash文件时我们要首先给与这个Bash以运行允许，使用以下语句
+  ```
+  $ chmod u+x script.sh
+  然后运行即可
+  $ ./script.sh
+  ```
 ### Variables and Command Arguments
++ 在脚本语言中，我们一般使用变量存储我们的设定，并且将这些变量放在每一个脚本文件的顶部。
+  脚本语言中变量没有数据类型。我们使用$加变量名字来访问变量。
+  ```
+  $ results_dir="results/"
+  $ echo $results_dir
+  results/
+  ```
+  如果我们想创建一个名为vname_aln/的文件夹，我们需要这样写语句
+  ```
+  $ sample="CNTRL01A"
+  $ mkdir ${sample}_aln/
+  或者这样
+  $ mkdir "${sample}_aln/"
+  ```
 #### Command-line arguments
++ 脚本文件中$0变量代表的是文件的名字。我们可以写如下的脚本文件：
+  ```
+  首先建立一个脚本文件
+  $ touch args.sh
+  然后更改权限以让运行
+  $ chmod u+x args.sh
+  然后写入脚本文件
+  $ vim ars.sh
+  #!/bin/bash
+  set -e
+  set -u
+  set -o pipefail
+
+  echo "script name: $0"
+  echo "first arg: $1"
+  echo "second arg: $2"
+  echo "third arg: $3"
+  然后运行以上脚本文件
+  $ ./args.sh arg1 arg2 arg3
+  运行结果如下
+  script name: args.sh
+  first arg: arg1
+  second arg: arg2
+  third arg: arg3
+  ```
+  可以使用$#来统计输入到脚本中的变量个数。
+  ```
+  if [ "$#" -lt 3 ] # are there less than 3 arguments?
+  then
+      echo "error: too few arguments, you provided $#, 3 required"
+      echo "usage: script.sh arg1 arg2 arg3"
+      exit 1
+  fi
+  ```
 ### Conditionals in a Bash Script: if Statements
++ Bash支持条件语句，但是在脚本语言中0代表真而其他代表假。基本的语句形式如下
+  ```
+  if [commands]
+  then
+    [if-statements]
+  else
+    [else-statements]
+  fi
+  ```
+  比如说grep在Linux中如果返回0代表匹配成功而1则相反。比如说当我们想要运行一些语句当一个文件中包含
+  特定的string。如下
+  ```
+  if grep "pattern" some_file.txt > /dev/null
+  then
+   # commands to run if "pattern" is found
+   echo "found 'pattern' in 'some_file.txt'"
+  fi
+  ```
+  也可以使用逻辑符号
+  ```
+  if grep "pattern" file_1.txt > /dev/null
+    && grep "pattern" file_2.txt > /dev/null
+  then
+    echo "found 'pattern' in 'file_1.txt' and in 'file_2.txt'"
+  fi
+  或者！代表非
+  if ! grep "pattern" some_file.txt > /dev/null
+  then
+    echo "did not find 'pattern' in 'some_file.txt"
+  fi
+  ```
+  可以使用test命令来比较变量
+  ```
+  $ test "ATG" = "ATG" ; echo "$?"
+  0
+  $ test "ATG" = "atg" ; echo "$?"
+  1
+  $ test 3 -lt 1 ; echo "$?"
+  1
+  $ test 3 -le 3 ; echo "$?"
+  0
+  ```
+  也可以使用test来查看一个文件的状态
+  ```
+  $ test -d some_directory ; echo $? # is this a directory?
+  0
+  $ test -f some_file.txt ; echo $? # is this a file?
+  0
+  $ test -r some_file.txt ; echo $? $ is this file readable?
+  0
+  $ test -w some_file.txt ; echo $? $ is this file writable?
+  1
+  ```
+  所以可以将if语句和test结合起来
+  ```
+  if test -f some_file.txt
+  then
+    [...]
+  fi
+  或者用以下语句代替上面的语句
+  if [ -f some_file.txt ]
+  then
+    [...]
+  fi
+  ```
+  如果我们使用test语句，那么逻辑符号就得使用-a,-o,!分别代表与或非，比如说如果我们想要我们的
+  脚本有足够的变量，并且希望输入的文件是可读的，可以使用以下语句
+  ```
+  if[ "$#" -ne 1 -o ! -r "$1" ]
+  then
+    echo "usage: script.sh file_in.txt"
+    exit 1
+  fi
+  ```
+  上述的逻辑运行满足短路判断。short-circuit evaluation。
 ### Processing Files with Bash Using for Loops and Globbing
++ 为了创建一个pipeline来处理一系列文件我们需要遵循三个条件
+  1. 选出那些文件来执行命令
+  2. 循环数据并且执行命令
+  3. 跟踪创建的任何输出文件的名称
++ 如果我们想要循环每一个文件，并且收集质量统计数据从每一个文件中，然后将这些信息存储到输出文件
+  中。可以使用以下步骤
+  首先将所有的文件名字存储到一个Bash array中。
+  ```
+  $ sample_names=(zmaysA zmaysB zmaysC)
+  ```
+  然后可以使用以下语句访问这个array
+  ```
+  $ echo ${sample_names[0]}
+  $ echo ${sample_names[@]}
+  zmaysA zmaysB zmaysC
+  $ echo ${#sample_names[@]}
+  3
+  ```
+  但是上面的信息其实我们都存储在一个文件中，所以我们可以使用这个文件来自动的创建一个array.
+  ```
+  $ sample_files=($(cut -f 3 samples.txt))
+  $ echo ${sample_files[@]}
+  seq/zmaysA_R1.fastq seq/zmaysA_R2.fastq seq/zmaysB_R1.fastq
+  seq/zmaysB_R2.fastq seq/zmaysC_R1.fastq seq/zmaysC_R2.fastq
+  ```
+  可以使用以下语句来查看Bash中的单词分隔符。
+  ```
+  $ printf %q "$IFS"  internal Field separator
+  $ ' \t\n'
+  ```
+  为了避免一些问题所以我们在文件名字都一般都避免使用空格，tabs,换行符和特殊字符比如说*。
+  然后使用basename来得到真正的文件的名字。
+  ```
+  $ basename -s .fastq seqs/zmaysA_R1.fastq
+  zmaysA_R1
+  ```
+  然后就可以构造我们的处理文件脚本了
+  ```
+  #!/bin/bash
+
+  set -e
+  set -u
+  set -o pipefail
+  # specify the input samples file, where the third
+  # column is the path to each sample FASTQ file
+  sample_info=samples.txt
+
+  # create a Bash array from the third column of $sample_info
+  sample_files=($(cut -f 3 "$sample_info"))
+
+  for fastq_file in ${sample_files[@]}
+  do
+     # strip .fastq from each FASTQ file, and add suffix
+     # "-stats.txt" to create an output filename for each FASTQ file
+     results_file="$(basename $fastq_file .fastq)-stats.txt"
+
+     # run fastq_stat on a file, writting results to the filename we've above
+     fastq_stat $fastq_file > stats/$results_file
+  done
+  ```
+  上面的例子，每一个循环中我们只需要一个输入文件然后一个输出文件即可，但是有时候我们可能需要
+  多个输入文件，然后将结果输出到一个输出文件中。
+  ```
+  #!/bin/bash
+  set -e
+  set -u
+  set -o pipefail
+
+  # specify the input samples file, where the third
+  # column is the path to each sample FASTQ file
+  sample_info=samples.txt
+
+  # our reference
+  reference=zmays_AGPv3.20.fa
+
+  # create a Bash array from the first column, which are
+  # sample names. Because there are duplicate sample names
+  # (one for each read pair), we call uniq
+  sample_names=($(cut -f 1 "$sample_info" | uniq))
+
+
+  for sample in ${sample_names[@]}
+  do
+     # create an output file from the sample name
+     results_file="${sample}.sam"
+     bwa mem $reference ${sample}_R1.fastq ${sample}_R2.fastq \
+       > $results_file
+  done
+  ```
 ## Automating File-Processing with find and xargs
 ### Using find and xargs
 ### Finding Files with find

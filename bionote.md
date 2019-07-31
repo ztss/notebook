@@ -1566,7 +1566,9 @@
 
 
 # Bioinformatics Shell Scripting, Writing Pipelines, and Parallelizing Tasks
++ pipeline对于我们日常的工作十分重要，所以必须要求鲁棒性和可重复性。
 ## Basic Bash Scripting
+
 ### Writing and Running Robust Bash Scripts
 #### A robust Bash header
 #### Running Bash scripts

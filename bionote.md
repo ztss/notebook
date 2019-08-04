@@ -1853,8 +1853,108 @@
   $ find seqs -type f "!" -name "zmaysC*fastq" -and "!" -name "*-temp*"
   ```
 ### find’s -exec: Running Commands on find’s Results
-+
++ its real strength in bioinformatics is as a tool to programmatically access certain files
+  you want to run a command on.这一节主要看如何使用 find -exec option来跑process。
+  ```
+  在文件夹中创建临时文件
+  $ touch zmays{A,C}_R{1,2}-temp.fastq
+  ```
+  假如我们想要删除所有的这些临时文件，可以使用
+  ```
+  $ rm *-temp.fastq
+  ```
+  这条语句具有相当大的风险，比如说我们不小心在*-中间加了个空格，那么会删除这个文件夹中的所有
+  文件。可以使用更加安全的-exec。
+  ```
+  $ find . -name "*-temp.fastq" -exec rm -i {} \;
+  remove ./zmaysA_R1-temp.fastq? y
+  remove ./zmaysA_R2-temp.fastq? y
+  remove ./zmaysB_R1-temp.fastq? y
+  remove ./zmaysC_R1-temp.fastq? y
+  remove ./zmaysC_R2-temp.fastq? y
+  ```
 ### xargs: A Unix Powertool
++ xargs allows us to take input passed to it from standard in, and use this input as
+  arguments to another program.
++ 将find和xargs一起使用跟-exec很像，但是这样使用也有一些好处。
+  ```
+  首先创建一些临时测试文件
+  $ touch zmays{A,C}_R{1,2}-temp.fastq # create the test files
+  $ find . -name "*-temp.fastq" | xargs rm
+  也可以打印出运行的阶段
+  $ find . -name "*-temp.fastq" | xargs -n 1 echo "rm -i" > delete-temp.sh
+  这样就建立了一个Bash文件，可以使用bash来运行文件里的命令
+  $ bash delete-temp.sh
+  remove ./zmaysA_R1-temp.fastq? y
+  remove ./zmaysA_R2-temp.fastq? y
+  remove ./zmaysC_R1-temp.fastq? y
+  remove ./zmaysC_R2-temp.fastq? y
+  ```
 ### Using xargs with Replacement Strings to Apply Commands to Files
++ 例子
+  ```
+  $ find . -name "*.fastq" | xargs basename -s ".fastq"
+  然后在这些文件上跑fastq_stat
+  $ find . -name "*.fastq" | xargs basename -s ".fastq" | \ xargs -I{} fastq_stat --in
+     {}.fastq --out ../summaries/{}.txt
+  ```
 ### xargs and Parallelization
++ 并行运行
+  ```
+  $ find . -name "*.fastq" | xargs basename -s ".fastq" | \ xargs -P 6 -I{} fastq_stat --in
+       {}.fastq --out ../summaries/{}.txt
+  ```
 ## Make and Makefiles: Another Option for Pipelines
++ Make旨在编译软件，这是一个复杂的过程，因为编译文件的每个步骤都需要确保每个依赖项已经编译或可用。
++ makefile一般有一系列的rule组成，每一个rule有三个部分:target,prerequisites,recipe。每一个
+  recipe都是一系列为了创建一个target的命令，是一个文件。prerequisites是recipe创建target所需要的
+  文件。Make的惊人创造性在于程序会根据先决条件和目标确定如何使用所有规则为您构建文件。我们打算
+  写一个pipeline来从网络上下载文件并且创建这些文件的简介。
+  ```
+  FASTA_FILE_LINK=http://bit.ly/egfr_flank   1
+
+  .PHONY: all clean   2
+
+  all: egfr_comp.txt   3
+
+  egfr_flank.fa:   4
+          curl -L $(FASTA_FILE_LINK) > egfr_flank.fa
+
+  egfr_comp.txt: egfr_flank.fa   5
+          seqtk comp egfr_flank.fa > egfr_comp.txt
+
+  clean:   6
+         rm -f egfr_comp.txt egfr_flank.fa
+  ```
+  第一个部分定义变量。第二部分的target是all和clean,这里的target不是文件而是我们可以引用的目标
+  的名称。当perrequisities是.PHONY时，target不是文件。第三部分中all是用于构建此makefile要构建的所有
+  文件的目标的常规名称，在这个例子中我们的makefile的目标时从网络上下载一个fasta文件并且在这个
+  文件上跑seqtk comp。我们最终写入的文件是egfr_comp.txt，因此这个文件是所有target的prerequisite。
+  第四部分是一个rule，这个rule是为了创建egfr_flank.fa，这个rule没有prerequisite，因为下载这个文件
+  不需要任何本地的文件。recipe是curl，为了下载文件。第五部分的rule是为了创建文件egfr_comp.txt，这里
+  我们需要使用到egfr_flank.fa,所以这个rule的prerequisite是egfr_flank.fa，然后recipe跑seqtks comp
+  程序。第六部分的target是clean，他的recipe是为了清除这个makefile所产生的所有文件。
+  为了运行上面的makefile，我们使用
+  ```
+  $ make all
+  ```
+  这里的all参数指出make应该从all这个target这里开始执行。然后make就会查找当前目录中的makefile，载入
+  这个文件，然后运行。
+  make的一个非常好的特性是它只会在target不存在或者prerequisite被改变的时候才会运行。比如说我们
+  有一个非常长的makefile，你修改了一个文件，make只会重新运行target依赖这个修改文件的recipe。如下
+  ```
+  $ make all
+  make: Nothing to be done for `all'.
+  ```
+  也比如
+  ```
+  $ touch egfr_flank.fa
+  $ make all
+  seqtk comp egfr_flank.fa > egfr_comp.txt
+  ```
+  最后我们可以移除所有的文件通过使用clean这个target。
+  ```
+  $ make clean
+  rm -f egfr_comp.txt egfr_flank.fa
+  ```
++ 另外，因为makefile是以声明方式编写的（并以非线性方式执行），所以调试makefile非常棘手。

@@ -1958,3 +1958,36 @@
   rm -f egfr_comp.txt egfr_flank.fa
   ```
 + 另外，因为makefile是以声明方式编写的（并以非线性方式执行），所以调试makefile非常棘手。
+
+
+# Out-of-Memory Approaches: Tabix and SQLite
+## Fast Access to Indexed Tab-Delimited Files with BGZF and Tabix
+### Compressing Files for Tabix with Bgzip
+### Indexing Files with Tabix
+### Using Tabix
+## Introducing Relational Databases Through SQLite
+### When to Use Relational Databases in Bioinformatics
+### Installing SQLite
+### Exploring SQLite Databases with the Command-Line Interface
+### Querying Out Data: The Almighty SELECT Command
+#### Limiting results with LIMIT
+#### Selecting columns with SELECT
+#### Ordering rows with ORDER BY
+#### Filtering which rows with WHERE
+### SQLite Functions
+### SQLite Aggregate Functions
+#### Grouping rows with GROUP BY
+### Subqueries
+### Organizing Relational Databases and Joins
+#### Organizing relational databases
+#### Inner joins
+#### Left outer joins
+### Writing to Databases
+#### Creating tables
+#### Inserting records into tables
+#### Indexing
+### Dropping Tables and Deleting Databases
+### Interacting with SQLite from Python
+#### Connecting to SQLite databases and creating tables from Python
+#### Loading data into a table from Python
+### Dumping Databases

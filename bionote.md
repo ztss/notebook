@@ -1812,9 +1812,48 @@
   ```
 ## Automating File-Processing with find and xargs
 ### Using find and xargs
++ 如果我们想要将所有后缀带有.fq的文件经过一个程序处理。
+  ```
+  $ ls *.fq
+  treatment-01.fq treatment 02.fq treatment-03.fq
+  $ ls *.fq | process_fq
+  ```
+  也可以直接这样写
+  ```
+  $ process_fq *.fq
+  ```
+  但是可能会有一些问题，那就是文件列表太长了。导致运行错误，所以我们可以使用find和xargs来
+  进行更好的解决方案。
 ### Finding Files with find
++ 与ls不同的是，find是递归的，即它还有寻找子文件夹。使用find加上文件夹的名字可以看见一个文件
+  的结构。
+  ```
+  $ find zmays-snps
+  ```
+  也可以限定find操作查找的深度，通过添加maxdepth参数。
+  ```
+  $ find bds-files -maxdepth 1
+  ```
+  ```
+  $ find data/seqs -name "zmaysB*fastq"
+  data/seqs/zmaysB_R1.fastq
+  data/seqs/zmaysB_R2.fastq
+  ```
 ### find’s Expressions
++ 上面的代码可能也会返回文件夹，为了只返回文件，可以这样
+  ```
+  $ find data/seqs -name "zmaysB*fastq" -type f
+  ```
+  也可以在find命令中添加逻辑运算符，如
+  ```
+  $ find data/seqs -name "zmaysA*fastq" -or -name "zmaysC*fastq" -type f
+  ```
+  也可以直接这样写
+  ```
+  $ find seqs -type f "!" -name "zmaysC*fastq" -and "!" -name "*-temp*"
+  ```
 ### find’s -exec: Running Commands on find’s Results
++
 ### xargs: A Unix Powertool
 ### Using xargs with Replacement Strings to Apply Commands to Files
 ### xargs and Parallelization

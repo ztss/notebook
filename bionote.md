@@ -1961,7 +1961,16 @@
 
 
 # Out-of-Memory Approaches: Tabix and SQLite
++ 这一章主要将如何处理内存之外的数据。一般有两种工具：Tabix,SQLite database。
 ## Fast Access to Indexed Tab-Delimited Files with BGZF and Tabix
++ The tools we’ll see in this section are specially designed to get around these limitations,
+  allowing fast random-access of tab-delimited genome position data.
++ 首先我们看BGZF，这是一种允许快速随机访问的巧妙的压缩格式(Blocked GNU Zip Format)，与gzip
+  不同的是，BGZF不会压缩整个文件，而是将整个文件压缩成块。这样做有一些好处
+  1. 我们可以跳转并且解压缩特定块而无需解压缩整个文件。
++ In this section, we’ll utilize BGZF compression and a command-line tool called Tabix to
+  provide fast random access to a variety of tab-delimited genomic formats, including GFF,
+  BED, and VCF.
 ### Compressing Files for Tabix with Bgzip
 ### Indexing Files with Tabix
 ### Using Tabix

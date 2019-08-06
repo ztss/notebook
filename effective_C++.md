@@ -128,4 +128,81 @@
   2. 编译器强制实施 bitwise constness ，但你编写程序时应该使用"概念上的常量性".
   3. 当const和non-const成员函数有着实质等价的实现时，令non-const版本调用const版本可避免代
   码重复。
-## item 4
+## item 4 Make sure that objects are initialized before they're used
++ 确定对象在使用前已先被初始化，对于内置类型以外的类型，确保每一个构造函数都将对象的每一个
+  成员初始化。
++ C++ 规定，对象的成员变量的初始化动作发生在进入构造函数本体之前。所以，一般构造函数采用
+  member initialized list替换赋值动作。
+  ```
+  ABEntry::ABEntry(const std::string& name,const std::string address,
+    const std::list<PhoneNumber>& phones):
+    theName(name),
+    theAddress(adress),
+    thePhones(phones),
+    numTimesConsulted(0){  }
+  ```
+  为什么使用这种方法呢？因为初始值列表只调用拷贝构造函数，比先调用默认构造函数然后再调用拷贝赋值
+  操作符要快得多。总是使用成员初值列。这样做有时候绝对必要，且又往往比赋值更高效。
++ 将"内置型成员变量"明确地加以初始化，而且也确保你的构造函数运用"成员初值列"初始化base classes
+  和成员变量。还要关注不同编译单元内定义之non-local static对象的初始化次序。
++ static对象包括global对象、定义于namespace作用域内的对象、在classes内、在函数内、以及在file
+  作用域内被声明为static的对象。函数内的static对象称为local static对象(因为它们对函数而言是
+  local) ，其他static对象称为non-localstatic对象。程序结束时static对象会被自动销毁，也就
+  是它们的析构函数会在main()结束时被自动调用。
++ 所谓编译单元<translation unit)是指产出单一目标文件(single object file)的那些源码。基本上
+  它是单一源码文件加上其所含入的头文件(#include files)。
++ 我们关注一个问题，它涉及两个源码文件，每一个内含至少一个non-local static对象，如果某个编译
+  单元的某个non-local static对象的初始化动作使用了另一个编译单元内的某个non-local static对象。
+  它所用到的这个对象可能未被初始化。因为 C++ 对"定义于不同编译单元内的non-local static对象"的
+  初始化次序并无明确定义。怎么解决这个问题呢？将每个non-local static对象搬到自己的专属函数内
+  (该对象在此函数内被声明为static)。这些函数返回一个reference指向它所含的对象。然后用户调用
+  这些函数，而不直接指涉这些对象。换句话说，non-local static对象被local static对象替换了。
+  因为C++保证，函数内的local static对象会在该函数被调用期间首次遇上该对象的定义式的时候被初始化。
+  ```
+  class FileSystem{
+    public:
+       ...
+       std::size_t numDisks() const;
+       ...
+  };
+  extern FileSystem tfs;
+
+  //来自另一个程序库
+  class Directory{
+    public:
+       Directory(params);
+       ...
+  };
+  Directory::Directory(params){
+    ...
+    std::size_t disks=tfs.numDisks();
+  }
+
+  Directory tempDir(params);
+  上面的例子就会反映不同编译单元内的non-local static对象初始化顺序的问题。
+  ```
+  可以改为
+  ```
+  class FileSystem { ... );
+  FileSystem& tfs(){
+    static FileSystem fs;
+    return fs;
+  }
+
+  //另一个程序库中
+  class Directory { ... );
+  Directory::Directory(params){
+      ...
+      std::size_t disks=tfs.numDisks();
+  }
+  Directory& tempDir(){
+    static Directory td;
+    return td;
+  }
+  ```
+  由于这种类型的reference-returning函数十分简短，所以可以写成inline的。
++ 所以
+  1. 为内置型对象进行手工初始化，因为C++不保证初始化它们。
+  2. 造函数最好使用成员初值列(member initialization list)，而不要在构造函数本体内使用赋值
+  操作(assignment)。初值列列出的成员变量，其排列次序应该和它们在class中的声明次序相同。
+  3. 为免除"跨编译单元之初始化次序"问题，请以local static对象替换non-local static对象。

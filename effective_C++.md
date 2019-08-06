@@ -206,3 +206,13 @@
   2. 造函数最好使用成员初值列(member initialization list)，而不要在构造函数本体内使用赋值
   操作(assignment)。初值列列出的成员变量，其排列次序应该和它们在class中的声明次序相同。
   3. 为免除"跨编译单元之初始化次序"问题，请以local static对象替换non-local static对象。
+
+
+# 构造，析构，赋值运算
+## item 5 Know what functions C++ silently writes and calls
++ 如果你打算在一个"内含reference成员"的class内支持赋值操作(assignment)，你必须自己定义copy
+  assignment操作符。因为再C++中引用本身不允许被改变，即让引用改指向不同对象。(可能是指引用
+  的地址值不允许被改变)。
++ 所以
+  1. 编译器可以暗自为class创建default构造函数、copy构造函数、copyassignment操作符，以及
+  析构函数。

@@ -128,7 +128,7 @@
   2. 编译器强制实施 bitwise constness ，但你编写程序时应该使用"概念上的常量性".
   3. 当const和non-const成员函数有着实质等价的实现时，令non-const版本调用const版本可避免代
   码重复。
-## item 4 Make sure that objects are initialized before they're used
+## item4 Make sure that objects are initialized before they're used
 + 确定对象在使用前已先被初始化，对于内置类型以外的类型，确保每一个构造函数都将对象的每一个
   成员初始化。
 + C++ 规定，对象的成员变量的初始化动作发生在进入构造函数本体之前。所以，一般构造函数采用
@@ -209,10 +209,73 @@
 
 
 # 构造，析构，赋值运算
-## item 5 Know what functions C++ silently writes and calls
+## item5 Know what functions C++ silently writes and calls
 + 如果你打算在一个"内含reference成员"的class内支持赋值操作(assignment)，你必须自己定义copy
   assignment操作符。因为再C++中引用本身不允许被改变，即让引用改指向不同对象。(可能是指引用
   的地址值不允许被改变)。
 + 所以
   1. 编译器可以暗自为class创建default构造函数、copy构造函数、copyassignment操作符，以及
   析构函数。
+## item6 Explicitly disallow the use of compiler-generated functions you not want
++ 有时候我们希望禁止拷贝操作。即我们希望禁止拷贝构造函数和拷贝赋值函数。我们可以将这些函数
+  声明为private的，这样编译器不会自动生成他们，而且其他人也不能调用它们。而且为了阻止member
+  函数和friend函数调用private函数，可以只声明而不定义它们。如下面
+  ```
+  class HomeForSale{
+    public:
+       ...
+    private:
+       ...
+       HomeForSale(const HomeForSale&);
+       HomeForSale& operator=(const HomeForSale&);//只有声明
+  };
+  ```
+  或者使用一个uncopyable基类。然后用类继承这个uncopyable类
+  ```
+  class Uncopyable{
+  protected:
+     Uncopyable(){}
+     ~Uncopyable(){}
+  private:
+     Uncopyable(const Uncopyable&);
+     Uncopyable& operator=(const Uncopyable&);//阻止copying
+  };
+
+  class HomeForSale:private Uncopyable{
+    ...
+  };
+  ```
+  当有人调用拷贝操作尝试操作HomeForSale对象，编译器就会生成一个拷贝构造函数和拷贝赋值操作符。
+  这些生成的函数会调用基类中的对应兄弟，但是由于基类中的拷贝函数是private的，所以这些调用
+  会被编译器拒绝。
++ 所以
+  1. 为驳回编译器自动(暗自)提供的机能，可将相应的成员函数声明为private并且不予实现。使用
+    像Uncopyable这样的base class也是一种做法。
+## item7 Declare destructors virtual in polymorphic base classes(为多态基类声明virtual析构函数)
++ 当我们设计了一个factory函数，他会返回一个基类指针，并且指向新生成的派生类对象。这样在这个对象被
+  销毁的时候，它是由基类指针删除的，那么它派生的成员却没有被销毁。所以我们要给基类一个虚析构函数。
++ 请确保在一个类中不是只有虚析构函数，还应该有其他的虚函数。因为如果class不含virtual函数，通常表示
+  它并不意图被用做一个base class。当class不企图被当作base class，令其析构函数为virtual往往是个馊
+  主意。
+  ```
+  class Point{
+     public:
+        Point(int xcoord,int ycoord);
+        ~Point();
+     private:
+        int x,y;
+  };
+  ```
+  如果一个int占用32bit,上面的Point对象可以存入一个64bit的缓存器中，然后这样的一个point对象
+  可以当作64bit量传给其他语言C或者Fortran的函数。如果point的析构函数是虚函数。那么由于point
+  对象就有多出一个指向虚函数表的指针，那么大小就变为96bit了，那么这个对象就不能放入64bit的缓
+  存器中了。那么C++的point对象就不会和其他语言内的相同声明具有一样的结构了，因为其他语言没有
+  实现vptr(virtual table pointer)。所以就不能将他传递至其他语言缩写的函数。所以。
+  只有当class内含至少一个virtual函数， 才为它声明virtual析构函数。
++ 不要继承一个没有虚析构函数的类。而且如果一些类设计为只是为了当作基类使用，而不实现多态，那么
+  就没有必要实现虚析构函数。
++ 所以
+  1. polymorphic(带多态性质的)base classes应该声明一个virtual析构函数。如果class带有任何
+  virtual函数，它就应该拥有一个virtual析构函数。
+  2. Classes的设计目的如果不是作为base classes使用，或不是为了具备多态性(polymorphically)，
+  就不该声明virtual析构函数。

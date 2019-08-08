@@ -279,3 +279,109 @@
   virtual函数，它就应该拥有一个virtual析构函数。
   2. Classes的设计目的如果不是作为base classes使用，或不是为了具备多态性(polymorphically)，
   就不该声明virtual析构函数。
+## item8 Prevent exception from leaving destructors(别让异常逃离析构函数)
++ 假如析构函数必须执行一个动作，而该动作可能会在失败的时候抛出异常。比如
+  ```
+  class DBConnection{
+    public:
+       ...
+       static DBConnection create();
+
+
+       void close();//关闭联机，失败抛出异常
+  };
+  为了确保客户不忘记在DBConnection对象上调用close()。我们创建一个管理这个类的class。并且在类
+  的析构函数中调用close。
+  class DBConn{
+    public:
+      ...
+      ~DBConn(){
+        db.close();
+      }
+    private:
+      DBConnection db;
+  };
+  ```
+  如果析构函数没有问题，那么就最好，但是如果DBConn析构函数导致异常，就会出现问题。
+  可以用下面的方法解决这个问题
+  1. 如果close抛出异常就结束程序。使用abort完成
+  ```
+  DBConn::~DBConn(){
+    try{ db.close(); }
+    catch(...){
+      ...
+      std::abort();
+    }
+  }
+  ```
+  2. 吞掉因调用close而发生的异常
+  ```
+  DBConn::~DBConn()
+  {
+    try{ db.close(); }
+    catch(...) {
+      ...
+    }
+  }
+  ```
++ 所以
+  1. 构函数绝对不要吐出异常。如果一个被析构函数调用的函数可能抛出异常，析构函数应该捕捉任何
+  异常，然后吞下它们(不传播)或结束程序。
+  2. 如果客户需要对某个操作函数运行期间抛出的异常做出反应，那么class应该提供一个普通函数
+  (而非在析构函数中)执行该操作。
+#item9 Never call virtual functions during construction or destruction.
++ 不要在构造函数和析构函数期间调用virtual函数。比如说，如果在派生类构造的过程中，肯定是先
+  调用基类的构造函数，而如果基类的构造函数中调用了虚函数，那么在基类的构造过程中肯定是调用
+  基类里的虚函数，而不是目标要构造的派生类里的继承虚函数。而如果基类是个抽象基类，那么基类里
+  的虚函数就是纯虚函数，这个时候这个基类里的虚函数就不会被定义，就会出现错误。
++ 还有一种说法
+  ```
+  class Transaction{
+    public:
+      Transaction(){
+        init();//将多个构造函数中相同的工作放入一个init函数中，这个函数放在private里面
+      }
+      virtual void logTransaction() const = 0;
+      ...
+    private:
+      void init(){
+        ...
+        logTransaction();//这里调用虚函数
+      }
+  };
+  ```
+  上面这个代码在构造函数中调用了虚函数，但是很难被发现。所以
+  确定你的构造函数和析构函数都没有(在对象被创建和被销毁期间)调用virtual函数，而它们调用的
+  所有函数也都服从同一约束。
+  如何解决这个问题呢？可以在class transaction内将logTransaction函数改为非虚函数，然后
+  要求派生类的构造函数传递信息给transaction构造函数，然后这个构造函数就可以调用非虚的
+  logTransaction。
+  ```
+  class Transaction{
+    public:
+      explicit Transaction(const std::string& logInfo);
+      void logTransaction(const std::string& logInfo) const;
+      ...
+    private:
+  };
+  Transaction::Transaction(const std::string& logInfo){
+    ...
+    logTransaction(logInfo);
+  }
+
+  class BuyTransaction: public Transaction{
+    public:
+      BuyTransaction(params):
+        Transaction(createLogString(params)){...}
+      ...
+    private:
+      static std::string createLogString(params);
+      //由于static修饰的类成员属于类，不属于对象，因此static类成员函数是没有this指针的，this
+      //指针是指向本对象的指针。正因为没有this指针，所以static类成员函数不能访问非static的类
+      //成员，只能访问 static修饰的类成员。这样就不会访问Buytransaction对象构造期间尚未初始化
+      //的成员变量。
+  };
+  ```
++ 所以
+  1. 在构造和析构期间不要调用virtual函数，因为这类调用从不下降至derived class(比起当前执行
+  构造函数和析构函数的那层)。

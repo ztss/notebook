@@ -329,7 +329,7 @@
   异常，然后吞下它们(不传播)或结束程序。
   2. 如果客户需要对某个操作函数运行期间抛出的异常做出反应，那么class应该提供一个普通函数
   (而非在析构函数中)执行该操作。
-#item9 Never call virtual functions during construction or destruction.
+## item9 Never call virtual functions during construction or destruction.
 + 不要在构造函数和析构函数期间调用virtual函数。比如说，如果在派生类构造的过程中，肯定是先
   调用基类的构造函数，而如果基类的构造函数中调用了虚函数，那么在基类的构造过程中肯定是调用
   基类里的虚函数，而不是目标要构造的派生类里的继承虚函数。而如果基类是个抽象基类，那么基类里
@@ -385,3 +385,20 @@
 + 所以
   1. 在构造和析构期间不要调用virtual函数，因为这类调用从不下降至derived class(比起当前执行
   构造函数和析构函数的那层)。
+## item10 Hava assignment operators return a reference to * this
++ 令operator=返回一个reference to * this。例如
+  ```
+  class Widget{
+    public:
+      ...
+      Widget& operator=(const widget& rhs)
+      {
+        ...
+        retrun *this;
+      }
+  };
+  ```
++ 所以
+  1. 令赋值(assignment)操作符返回一个reference to * this。
+## item11 Handle assignment to self in operator=
++

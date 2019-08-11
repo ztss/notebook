@@ -401,4 +401,62 @@
 + 所以
   1. 令赋值(assignment)操作符返回一个reference to * this。
 ## item11 Handle assignment to self in operator=
-+
++ 避免自我赋值，w=w,a[i]=a[j],* px=* py。这些都有可能是自我赋值。看以下代码
+  ```
+  Widget& Widget::operator=(const Widget& rhs)
+  {
+    delete pb;
+    pb=new Bitmap(*rhs.pb);
+    return *this;
+  }
+  ```
+  如果widget类出现了自我赋值，那么就会出现问题，因为他把自身先delete了。可以将上面的函数改为
+  ```
+  Widget& Widget::operator=(const Widget& rhs)
+  {
+    if(this==&this)
+      return *this;//identity test
+    delete pb;
+    pb=new Bitmap(*rhs.pb);
+    return *this;
+  }
+  ```
+  上面的第一版操作符重载函数不具备自我赋值安全性和异常安全性，而第二版仍然存在异常方面的麻烦。
+  因为如果"new Bitmap"导致异常(不论是因为分配时内存不足或因为Bitmap的copy构造函数抛出异常)
+  ,Widget最终会持有一个指针指向一块被删除的Bitmap。
+  很多时候，我们只要让operator=具备异常安全性，那么就会自动的获得自我赋值安全性。如下
+  ```
+  Widget& Widget::operator=(const Widget& rhs)
+  {
+    Bitmap* pOrig=pb;
+    pb=new Bitmap(*rhs.pb);
+    delete pOrig;
+    return *this;
+  }
+  ```
+  我们注意在赋值pb之前别删除pb就行了。而如果new Bitmap抛出异常，那么pb可以保持原状。也可以
+  使用所谓的copy and swap技术
+  ```
+  class Widget{
+    ...
+    void swap(Widget& rhs);
+    ...
+  };
+  Widget& Widget::operator=(const Widget& rhs){
+    Widget temp(rhs);//为rhs数据制作一份副本
+    swap(temp);//将*this数据和上述副本的数据交换
+    return *this;
+  }
+  ```
+  或者，也可以这么写，将operator=接受参数的方式改为传值方式，那么他在operator=函数参数构造
+  阶段就会产生拷贝，这样可以节省程序运行时间。
+  ```
+  Widget& Widget::operator=(Widget rhs){//rhs是被传对象一个副本
+    swap(rhs);//将*this数据和上述副本的数据交换
+    return *this;
+  }
+  ```
++ 所以
+  1. 确保当对象自我赋值时operator=有良好行为。其中技术包括比较"来源对象" 和"目标对象"的地址、
+  精心周到的语句顺序、以及copy-and-swap。
+  2. 确定任何函数如果操作一个以上的对象，而其中多个对象是同一个对象时，其行为仍然正确。

@@ -11,6 +11,7 @@
   3. Template C++.属于C++的泛型编程部分
   4. STL
 ## item2 Prefer consts,enums,and inlines to #define
++ 尽量以const，enum,inline替换#define.
 + 即尽量以编译器代替预处理器。即尽量不要使用
   ```
   #define ASPECT_RATIO 1.653
@@ -39,6 +40,7 @@
   1. 对于单纯变量，最好以const对象或者enums替换#define
   2. 对于形似函数的宏(macros)，最好改用inline函数替换#defines。
 ## item3 Use const whenever possible
++ 尽可能使用const。
 + 如果const出现在星号左边，表示被指物为常量。如果出现在星号右边，表示指针自身是常量。
 + STL选代器系以指针为根据塑模出来，所以迭代器的作用就像个T*指针。声明选代器为const就像
   声明指针为const一样(即声明一个T* const指针)，表示这个迭代器不得指向不同的东西但它所
@@ -129,6 +131,7 @@
   3. 当const和non-const成员函数有着实质等价的实现时，令non-const版本调用const版本可避免代
   码重复。
 ## item4 Make sure that objects are initialized before they're used
++ 确定对象被使用前巳先被初始化。
 + 确定对象在使用前已先被初始化，对于内置类型以外的类型，确保每一个构造函数都将对象的每一个
   成员初始化。
 + C++ 规定，对象的成员变量的初始化动作发生在进入构造函数本体之前。所以，一般构造函数采用
@@ -209,7 +212,8 @@
 
 
 # 构造，析构，赋值运算
-## item5 Know what functions C++ silently writes and calls
+## item5 Know what functions C++
++ 了解C++默默编写并调用哪些函数。
 + 如果你打算在一个"内含reference成员"的class内支持赋值操作(assignment)，你必须自己定义copy
   assignment操作符。因为再C++中引用本身不允许被改变，即让引用改指向不同对象。(可能是指引用
   的地址值不允许被改变)。
@@ -217,6 +221,7 @@
   1. 编译器可以暗自为class创建default构造函数、copy构造函数、copyassignment操作符，以及
   析构函数。
 ## item6 Explicitly disallow the use of compiler-generated functions you not want
++ 若不想使用编译器自动生成的函数，就该明确拒绝。
 + 有时候我们希望禁止拷贝操作。即我们希望禁止拷贝构造函数和拷贝赋值函数。我们可以将这些函数
   声明为private的，这样编译器不会自动生成他们，而且其他人也不能调用它们。而且为了阻止member
   函数和friend函数调用private函数，可以只声明而不定义它们。如下面
@@ -251,7 +256,8 @@
 + 所以
   1. 为驳回编译器自动(暗自)提供的机能，可将相应的成员函数声明为private并且不予实现。使用
     像Uncopyable这样的base class也是一种做法。
-## item7 Declare destructors virtual in polymorphic base classes(为多态基类声明virtual析构函数)
+## item7 Declare destructors virtual in polymorphic base classes
++ 为多态基类声明virtual析构函数。
 + 当我们设计了一个factory函数，他会返回一个基类指针，并且指向新生成的派生类对象。这样在这个对象被
   销毁的时候，它是由基类指针删除的，那么它派生的成员却没有被销毁。所以我们要给基类一个虚析构函数。
 + 请确保在一个类中不是只有虚析构函数，还应该有其他的虚函数。因为如果class不含virtual函数，通常表示
@@ -279,7 +285,8 @@
   virtual函数，它就应该拥有一个virtual析构函数。
   2. Classes的设计目的如果不是作为base classes使用，或不是为了具备多态性(polymorphically)，
   就不该声明virtual析构函数。
-## item8 Prevent exception from leaving destructors(别让异常逃离析构函数)
+## item8 Prevent exception from leaving destructors
++ 别让异常逃离析构函数。
 + 假如析构函数必须执行一个动作，而该动作可能会在失败的时候抛出异常。比如
   ```
   class DBConnection{
@@ -330,6 +337,7 @@
   2. 如果客户需要对某个操作函数运行期间抛出的异常做出反应，那么class应该提供一个普通函数
   (而非在析构函数中)执行该操作。
 ## item9 Never call virtual functions during construction or destruction.
++ 绝不在构造和析构过程中调用virtual函数。
 + 不要在构造函数和析构函数期间调用virtual函数。比如说，如果在派生类构造的过程中，肯定是先
   调用基类的构造函数，而如果基类的构造函数中调用了虚函数，那么在基类的构造过程中肯定是调用
   基类里的虚函数，而不是目标要构造的派生类里的继承虚函数。而如果基类是个抽象基类，那么基类里
@@ -386,6 +394,7 @@
   1. 在构造和析构期间不要调用virtual函数，因为这类调用从不下降至derived class(比起当前执行
   构造函数和析构函数的那层)。
 ## item10 Hava assignment operators return a reference to * this
++ 令 operator=返回一个reference to * this。
 + 令operator=返回一个reference to * this。例如
   ```
   class Widget{
@@ -401,6 +410,7 @@
 + 所以
   1. 令赋值(assignment)操作符返回一个reference to * this。
 ## item11 Handle assignment to self in operator=
++ 在operator=中处理"自我赋值"
 + 避免自我赋值，w=w,a[i]=a[j],* px=* py。这些都有可能是自我赋值。看以下代码
   ```
   Widget& Widget::operator=(const Widget& rhs)
@@ -460,3 +470,6 @@
   1. 确保当对象自我赋值时operator=有良好行为。其中技术包括比较"来源对象" 和"目标对象"的地址、
   精心周到的语句顺序、以及copy-and-swap。
   2. 确定任何函数如果操作一个以上的对象，而其中多个对象是同一个对象时，其行为仍然正确。
+## item12 Copy all parts of an object
++ 赋值对象时不要忘记每一个成分。
++ 

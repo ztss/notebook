@@ -472,4 +472,12 @@
   2. 确定任何函数如果操作一个以上的对象，而其中多个对象是同一个对象时，其行为仍然正确。
 ## item12 Copy all parts of an object
 + 赋值对象时不要忘记每一个成分。
-+ 
++ 考虑这样一种情况，如果你在一个类中新添加了一个数据成员，那么你就必须要修改class的所有构造
+  函数以及任何非标准形式的operator=。
++ 任何时候只要你承担起"为derived class撰写copying函数"的重责大任，必须很小心地也复制其base
+  class成分。那些成分往往是private(见条款22) ，所以你无法直接访问它们，你应该让derived class
+  的copying函数调用相应的base class函数。
++ 所以
+  1. Copying函数应该确保复制"对象内的所有成员变量"及"所有base class成分"。
+  2. 不要尝试以某个copying函数实现另一个copying函数。应该将共同机能放进第三个函数中，并由
+  两个coping函数共同调用。

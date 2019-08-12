@@ -622,3 +622,84 @@
 + 所以
   1. 以独立语句将newed对象存储于(置入)智能指针内。如果不这样做，一旦异常被抛出，有可能导致
   难以察觉的资源泄漏
+
+
+# 设计和声明
+## item18 Make interfaces easy to use correctly and hard to use incorrectly
++ 让接口容易被正确使用，不易被误用。
++ 定义一个month可以这样使用
+  ```
+  class Month{
+    public:
+      static Month Jan(){return Month(1);}
+      ...
+      static Month Dec() { return Month(12); }
+      ...
+    private:
+      explicit Month(int m);//阻止生成新的月份，这是月份专属数据
+  };
+  ```
++ 预防客户错误的另一个办法是，限制类型内什么事可做，什么事不能做。常见的限制是加上const。
+  除非有好理由，否则应该尽量令你的types的行为与内置types一致。
++ 避免无端与内置类型不兼容，真正的理由是为了提供行为一致的接口。
++ 任何接口如果要求客户必须记得做某些事情，就是有着"不正确使用"的倾向。例如这个函数
+  ```
+  Investment* createInvestment();
+  ```
+  为避免资源泄漏， createInvestment返回的指针最终必须被删除，但那至少开启了两个客户错误机会
+  :没有删除指针，或删除同一个指针超过一次。所以，最好的设计是
+  ```
+  std::trl::shared_ptr<Investment> createInvestment();
+  ```
+  而为了使用正确的资源析构机制，我们可以将删除器绑定在智能指针上。而为了shared_ptr第一个参数
+  要求一定是一个指针，我们使用cast转换
+  ```
+  std::tr1::shared_ptr<Investment> createInvestment(){
+    std::tr1::shared_ptr<Investment> retVal(static_cast<Investment*>(0),getRidOfInvestment);
+    retVal=...;
+    return retVal;
+  }
+  ```
++ 当然啦，如果被pInv管理的原始指针(raw pointer)可以在建立plnv之前先确定下来，那么"将原始指
+  针传给plnv构造函数"会比"先将pInv初始化为null再对它做一次赋值操作"为佳。
++ trl::shared_ptr有一个特别好的性质是它会自动使用它的"每个指针专属的删除器"，因而消除另一个
+  潜在的客户错误:所谓的"cross-DLLproblem"。这个问题发生于"对象在动态连接程序库(DLL)中被new
+  创建，却在另一个DLL内被delete销毁"。
++ 所以
+  1. 好的接口很容易被正确使用，不容易被误用。你应该在你的所有接口中努力达成这些性质。
+  2. "促进正确使用"的办法包括接口的一致性，以及与内置类型的行为兼容。
+  3. "阻止误用"的办法包括建立新类型、限制类型上的操作，束缚对象值，以及消除客户的资源管理责任。
+  4. trl::shared_ptr支持定制型删除器(custom deleter)。这可防范DLL问题，可被用来自动解除互
+  斥锁 (mutexes; 见条款 14) 等等。
+## item19 Treat class design as type design
++ 设计class犹如设计type。
++ 那么，如何设计高效的classes呢？
+  1. 新type的对象应该如何被创建和销毁，这会影响class的构造函数和析构函数以及内存分配函数
+  和释放函数。
+  2. 对象的初始化和对象的赋值该有什么样的差别？决定构造函数和赋值操作符的行为。
+  3. 新type的对象如果被passed by value,意味着什么？copy构造函数用来顶一个一个type的pass
+  by value该如何实现。
+  4. 什么是新type的合法值。对class的成员变量而言，通常只有某些数值集是有效的。那些数值集
+  决定了你的class必须维护的约束条件(invariants) .也就决定了你的成员函数(特别是构造函数、
+  赋值操作符和所谓 "setter" 函数)必须进行的错误检查工作。它也影响函数抛出的异常、以及
+  (极少被使用的)函数异常明细列(exception specifications)。
+  5. 你的新type需要配合某个继承图系么？如果你继承自某些既有的classes，你就受到那些classes
+  的设计的束缚，特别是受到"它们的函数是virtual或non-virtual"的影响(见条款 34 和条款 36)。
+  如果你允许其他classes继承你的class ，那会影响你所声明的函数尤其是析构函数是否为virtual。
+  6. 你的新type需要什么样的转换？如果你希望允许类型Tl之物被隐式转换为类型T2之物，就必须在
+  class Tl内写一个类型转换函数(operator T2)或在class T2内写一个non-explicit-one-argument
+  (可被单一实参调用)的构造函数。如果你只允许explicit构造函数存在，就得写出专门负责执行转换的
+  函数，且不得为类型转换操作符(type conversion operators)或non-exp1icit-one-argument构造函数。
+  7. 什么样的操作符和函数对新type是合理的？决定你为class声明那些函数。其中某些该是member函数
+  而某些不是。
+  8. 什么样的标准函数应该驳回？决定那些必须声明为private。
+  9. 谁该取用新type成员？决定那个成员为public，那个为protected，那个为private。
+  10. 什么是新type的未声明接口？你在这些方面提供的保证将为你的class实现代码加上相应的约束条件。
+  11. 你的新type有多么一般化？或许你其实并非定义一个新type，而是定义一整个types家族。果真如此
+  你就不该定义一个新class，而是应该定义一个新的class template。
+  12. 你真的需要一个新type么？如果只是定义新的derived class以便为既有的class添加机能，那么
+  说不定单纯定义一或多个non-member函数或templates.更能够达到目标。
++ 所以
+  1. Class的设计就是type的设计。在定义一个新type之前，请确定你己经考虑过本条款覆盖的所有讨论主题。
+## item20 Prefer pass-by-reference-to-const to pass-by-value.
++ 宁以pass-by-reference-to-const替换pass-by-value。

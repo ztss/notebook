@@ -481,3 +481,111 @@
   1. Copying函数应该确保复制"对象内的所有成员变量"及"所有base class成分"。
   2. 不要尝试以某个copying函数实现另一个copying函数。应该将共同机能放进第三个函数中，并由
   两个coping函数共同调用。
+
+
+# 资源管理
++ 资源一旦用了，必须还给系统。C++中的资源包括动态分配分配，文件描述器，互斥锁，图形界面中的字型
+  和笔刷。数据库连接，网络的sockets。
+## item13 Use objects to manage resources
++ 以对象管理资源。
++ 看以下继承体系
+  ```
+  class Investment {...};//root class
+  一个factory function
+  Investment* createInvestment();//返回指针，指向investment继承体系内的动态分配对象，
+  //调用者有责任删除它，省略了参数
+  //删除函数
+  void f(){
+    Investment* pInv=createInvestment();
+    ...
+    delete pInv;
+  }
+  ```
+  上面的删除函数可能不会走到最后一步，因为删除函数中间可能抛出异常。为确保createlnvestment
+  返回的资源总是被释放，我们需要将资源放进对象内，当控制流离开f，该对象的析构函数会自动释放
+  那些资源。
++ 可以使用智能指针auto_ptr。许多资源被动态分配于heap内而后被用于单一区块或函数内。它们应该
+  在控制流离开那个区块或函数时被释放。auto_ptr就是实现这个的。
+  ```
+  void f(){
+    std::auto_ptr<Investment> pInv(createInvestment());
+    ...
+  }
+  ```
+  这里体现了两个以对象管理资源的想法
+  1. 获得资源后立刻放入管理对象内。
+  2. 管理对象运用析构函数确保资源被释放。不论控制流如何离开区块，一旦对象离开作用域其析构
+  函数就会自动调用，释放资源。
++ 由于auto ptr被销毁时会自动删除它所指之物，所以一定要注意别让多个auto_ptr同时指向同一对象。
+  ```
+  std::auto_ptr<Investment> pInv(createInvestment());
+  std::auto_ptr<Investment> plnv2(plnvl);//现在pInv2指向对象，pInv1被设为null。
+  plnvl = plnv2;//现在pInv1指向对象，pInv2设为null。
+  ```
++ 这一诡异的复制行为，复加上其底层条件:"受auto_ptrs管理的资源必须绝对没有一个以上的
+  auto_ptr同时指向它"，意味auto_ptrs并非管理动态分配资源的神兵利器。举个例子，STL容器
+  要求其元素发挥"正常的"复制行为，因此这些容器容不得auto_ptr。
+  所以可以使用shared_ptr，即引用计数型智慧指针：reference-counting smart pointer。RCSPs
+  提供的行为类似垃圾回收，不同的是它无法打破环状引用(cycles of references，例如两个其实已经
+  没被使用的对象彼此互指，因而好像还处在"被使用"状态)。
+  ```
+  void f(){
+    ...
+    std::tr1::shared_ptr<Investment> pInv(createInvestment());
+    ...
+  }
+  ```
++ auto_ptr和trl::shared_ptr两者都在其析构函数内做delete而不是delete[]动作(条款16对两者
+  的不同有些描述)。那意味在动态分配而得的array身上使用auto_ptr或trl::shared_ptr是个馊主意。
++ 所以
+  1. 为防止资源泄漏，请使用RAII对象，它们在构造函数中获得资源并在析构函数中释放资源。
+  2. 两个常被使用的RAII classes分别是trl::shared_ptr和auto ptr。前者通常是较佳选择，因为
+  其copy行为比较直观。若选择auto_ptr，复制动作会使它(被复制物)指向null。
+## item14 Think carefully about copying behavior in resource-managing classes.
++ 在资源管理类中小心coping行为。
++ 资源取得时机就是初始化时机(resource Acquisition is initialization,RAII)。
++ class的基本结构由RAII守则支配，也就是"资源在构造期间获得，在析构期间释放"。
++ 当一个RAII对象被复制的时候，我们需要选择两种做法
+  1. 禁止复制，这个时候参考item6，将copying操作声明为private。
+  2. 对底层资源使用引用计数法，即使用tr1::shared_ptr。
++ 所以
+  1. 复制RAII对象必须一并复制它所管理的资源，所以资源的copying行为决定RAIl对象的copying行为。
+  2. 普遍而常见的RAII class copying行为是:抑制copying、施行引用计数法(reference counting)。
+  不过其他行为也都可能被实现。
+## item15 Provide access to raw resource in resource-managing classes
++ 在资源管理类中提供对原始资源的访问。
++ 假如
+  ```
+  std::trl::shared ptr<Investment> pInv(createInvestment());
+  然后定义这样一个函数
+  int daysHeld(const Investment* pi);
+  想要调用函数
+  int days=daysHeld(pInv);
+  这样行不通，因为daysheld需要的是Investment*指针，你传递的是个tr1::shared_ptr<Investment>
+  对象
+  所以需要将RAII class对象(即tr1::shared_ptr)转换为内含的原始资源(即Investment*)。
+  可以使用显式转换或者隐式转换。
+  ```
+  1. 使用get成员函数进行显式转换。
+  ```
+  int days=daysHeld(pInv.get());
+  ```
+  2. 通过重载的指针取值操作符(operator-> operator*)，隐式转换到底部原始指针。
+  ```
+  class Investment {
+    public: bool isTaxFree() const;
+    ...
+  };
+  Investment* createInvestment(); //factory函数
+  std::trl::shared_ptr<Investment> pil(createInvestment());
+  bool taxablel = !(pil->isTaxFree());
+  std::auto_ptr<Investment> pi2(createInvestment());
+  bool taxable2 = !((pi2).isTaxFree());
+  ```
++ 可以使用隐式转换函数，即形如operator FontHandle() const {return f;}。其中f为RAII类中的
+  底层资源。
++ 所以
+  1. APls往往要求访问原始资源(raw resources)，所以每一个RAII class应该提供一个"取得其所
+  管理之资源"的办法。
+  2. 原始资源的访问可能经由显式转换或隐式转换。一般而言显式转换比较安全，但隐式转换对客户
+  比较方便。

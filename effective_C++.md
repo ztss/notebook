@@ -589,3 +589,36 @@
   管理之资源"的办法。
   2. 原始资源的访问可能经由显式转换或隐式转换。一般而言显式转换比较安全，但隐式转换对客户
   比较方便。
+## item16 Use the same form in corresponding uses of new and delete
++ 成对使用new和delete时要采取相同形式。
++ 使用delete需要知道即将被删除的那个指针，所指的是单一对象或对象数组?这是个必不可缺的问题，
+  因为单一对象的内存布局一般而言不同于数组的内存布局。数组所用的内存通常还包括"数组大小"的
+  记录，以便delete知道需要调用多少次析构函数。
++ 所以，如果你调用new时使用[].你必须在对应调用delete时也使用[]。如果你调用new时没有使用[].
+  那么也不该在对应调用delete时使用[]。
++ 所以，为了避免delete的时候操作失误，我们一般不对数组形式使用typedefs动作。
++ 所以
+  1. 如果你在new表达式中使用[].必须在相应的delete表达式中也使用[]。如果你在new表达式中不使用[].
+  一定不要在相应的delete表达式中使用[]。
+## item17 Store newed objects in smart pointers in standalone statements
++ 以独立语句将newed对象置入智能指针.
++ 我们有下面的两个函数
+  ```
+  int priority();
+  void processWidget(std::tr1::shared_ptr<Widget> pw,int priority);
+  ```
+  不要使用下面的语句调用函数
+  ```
+  processWidget(std::trl::shared ptr<Widget> (new Widget) , priority());
+  ```
+  这个函数可能导致内存泄漏
+  因为在创建shared_ptr的时候，可能先调用priority()，如果它调用失败，那么就不会发生异常。
+  而是使用下面这样的形式
+  ```
+  std::tr1::shared_ptr<Widget> pw(new Widget);
+
+  processWidget(pw,priority());
+  ```
++ 所以
+  1. 以独立语句将newed对象存储于(置入)智能指针内。如果不这样做，一旦异常被抛出，有可能导致
+  难以察觉的资源泄漏

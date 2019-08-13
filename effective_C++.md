@@ -150,7 +150,7 @@
   和成员变量。还要关注不同编译单元内定义之non-local static对象的初始化次序。
 + static对象包括global对象、定义于namespace作用域内的对象、在classes内、在函数内、以及在file
   作用域内被声明为static的对象。函数内的static对象称为local static对象(因为它们对函数而言是
-  local) ，其他static对象称为non-localstatic对象。程序结束时static对象会被自动销毁，也就
+  local) ，其他static对象称为non-local static对象。程序结束时static对象会被自动销毁，也就
   是它们的析构函数会在main()结束时被自动调用。
 + 所谓编译单元<translation unit)是指产出单一目标文件(single object file)的那些源码。基本上
   它是单一源码文件加上其所含入的头文件(#include files)。
@@ -186,22 +186,24 @@
   ```
   可以改为
   ```
-  class FileSystem { ... );
+  class FileSystem { ... };
   FileSystem& tfs(){
     static FileSystem fs;
     return fs;
   }
 
   //另一个程序库中
-  class Directory { ... );
+  class Directory { ... };
   Directory::Directory(params){
       ...
-      std::size_t disks=tfs.numDisks();
+      std::size_t disks=tfs().numDisks();
   }
   Directory& tempDir(){
     static Directory td;
     return td;
   }
+  然后这样使用
+  Directory tempDir();
   ```
   由于这种类型的reference-returning函数十分简短，所以可以写成inline的。
 + 所以
@@ -744,3 +746,246 @@
   问题 (slicing problem)。
   2. 以上规则并不适用于内置类型，以及STL的迭代器和函数对象。对它们而言，pass-by-value往往
   比较适当。
+## item21 Don't try to return a reference when you must return an object
++ 必须返回对象时，别妄想返回其reference。
++ 如果我们有这样一个函数
+  ```
+  const Rational& operator* (const Rational& lhs , const Rational& rhs){
+    Rational result(lhs.n * rhs.n , lhs.d * rhs.d);
+    return result;
+  }
+  ```
+  上面这个函数要求返回一个引用，但是你返回了一个已经被析构的对象的引用，因为函数体内构造的
+  栈空间的临时变量，所以必须的在heap内构造一个对象，并且返回一个引用。使用new构造
+  ```
+  const Rational& operator* (const Rational& lhs , const Rational& rhs){
+    Rational *result=new Rational(lhs.n * rhs.n , lhs.d * rhs.d);
+    return *result;
+  }
+  ```
+  但是返回的对象怎么被delete呢？我们没有合理的办法取得operator*返回的reference背后隐藏的
+  指针。这将导致资源泄露
+  所以，当一个函数必须返回一个新对象，那么只能让函数返回一个新对象。
+  ```
+  inline const Rational operator * (const Rational& lhs, const Rational& rhs)
+  {
+    return Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+  }
+  ```
++ 所以
+  1. 绝不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap
+  -allocated对象，或返回pointer或reference指向一个local static对象而有可能同时需要多个
+  这样的对象。条款4已经为"在单线程环境中合理返回reference指向一个local static对象"提供了
+  一份设计实例。
+## item22 Declare data members private
++ 将成员变量声明为private。
++ 如果成员变量不是public，客户唯一能够访问对象的办法就是通过成员函数。如果public接口内的每
+  样东西都是函数，客户就不需要在打算访问class成员时迷惑地试着记住是否该使用小括号(圆括号)。
+  他们只要做就是了，因为每样东西都是函数。
++ 使用函数可以让你对成员变量的处理有更精确的控制。如果你令成员变量为public，每个人都可以读写
+  它，但如果你以函数取得或设定其值，你就可以实现出"不准访问"、 "只读访问" 以及"读写访问"。
++ 将成员变量隐藏在函数接口的背后，可以为"所有可能的实现"提供弹性。例如这可使得成员变量被读
+  或被写时轻松通知其他对象、可以验证class的约束条件以及函数的前提和事后状态、可以在多线程
+  环境中执行同步控制……等等。
++ 假设我们有一个protected成员变量，而我们最终取消了它，有多少代码被破坏?晤，所有使用它的
+  derived classes都会被破坏，那往往也是个不可知的大量。
++ 从封装的角度观看，其实只有两种访问权限：private(提供封装的)和其他(不提供封装)。所以protected
+  并不封装。
++ 所以
+  1. 切记将成员变量声明为private。这可赋予客户访问数据的一致性、可细微划分访问控制、允诺
+  约束条件获得保证，并提供class作者以充分的实现弹性。
+  2. protected并不比public更具封装性。
+## item23 Prefer non-member non-friend functions to member function
++ 宁以non-member、non-friend替换member函数。
++ 面向对象守则要求数据应该尽可能被封装，然而与直观相反地， member函数clearEverything带来
+  的封装性比non-member函数clearBrowser低。此外，提供non-member函数可允许对WebBrowser相
+  关机能有较大的包裹弹性(packaging flexibility)，而那最终导致较低的编译相依度，增加WebBrowser
+  的可延伸性。
++ 愈多函数可访问它，数据的封装性就愈低。能够访问private成员变量的函数只有class的member函数
+  加上friend函数而已。
++ 如果要你在一个member函数(它不只可以访问class内的private数据，也可以取用private函数、
+  enums 、typedefs等等)和一个non-member，non-friend函数(它无法访问上述任何东西)之间做抉择，
+  而且两者提供相同机能，那么，导致较大封装性的是non-member non-friend函数，因为它并不增加"
+  能够访问class内之private成分"的函数数量。
++ 还有就是成为一个类的非成员函数并不代表这个函数不可以是其他类的成员函数，因为其他类的成员
+  函数显然不能访问本类的private成员。
++ 当所有同一类的便利函数放在同一个头文件，但是不同类型的便利函数放在不同的头文件但是放在同
+  一个命名空间，这是C++标准程序库的组织方式，这样可以减少编译相依赖关系，因为用户可能只关注
+  一个类某一个功能。而这个功能则可能包含多个相关函数。这样客服也可以轻松的扩展这一组便利函数。
+  只需要将更多的非成员函数，非友元函数添加进去即可。
++ 例如，如果某个WebBrowser客户决定写些与影像下载相关的便利函数，他只需要在WebBrowserStuff
+  命名空间内建立一个头文件，内含那些函数的声明即可。新函数就像其他旧有的便利函数那样可用且
+  整合为一体。这样也是我们宁愿定义非成员函数的一个理由。
++ 所以
+  1. 宁可拿non-member non-friend函数替换member函数。这样做可以增加封装性、包裹弹性(packaging
+  flexibility)和机能扩充性。
+## item24 Declare non-member functions when type conversions should apply to all parameters
++ 若所育参数皆需类型转换，请为此采用non-member函数。
++ 令classes支持隐式类型转换通常是个糟糕的主意。当然这条规则有其例外，最常见的例外是在建立
+  数值类型时。假设你设计一个class用来表现有理数，允许整数"隐式转换"为有理数似乎颇为合理。
++ 如果我们将operator*定义为类的成员函数，比如
+  ```
+  const Rational operator* (const Rational& rhs) const;
+  ```
+  那么，如果我们使用下面两个式子进行调用
+  ```
+  result = oneHalf * 2;//正确
+  result = 2 * oneHalf;//错误
+  为什么呢，请看
+  result = oneHalf.operator*(2);
+  result = 2.operator*(oneHalf);
+  一一对应，第一个式子将2隐式转换为重载*的类。而第二个式子2没有operator*，所以显然调用失败
+  ```
+  所以为了让我们的乘法可以满足交换律，那么就需要让operator*成为非成员函数，这样允许编译器
+  在每一个实参身上执行隐式类型转换：
+  ```
+  class Rational{
+    ...
+  };
+  const Rational operator*(const Rational& lhs , const Rational& rhs){
+    return Rational(lhs.numerator() * rhs.numerator( ), lhs.denominator() * rhs.denominator());
+  }
+  ```
+  这样，前面的两个调用都能成功。还有就是，operator*是否应该是一个友元函数呢？
+  记住，无论何时如果你可以避免friend函数就该避免，因为就像真实世界一样，朋友带来的麻烦往往多
+  过其价值。
++ 所以
+  1. 如果你需要为某个函数的所有参数(包括被this指针所指的那个隐喻参数)进行类型转换，那么这个
+  函数必须是个non-member。
+## item25 Consider support for a non-throwing swap
++ 考虑写出一个不抛异常的swap函数。
++ 缺省情况下swap动作可由标准程序库提供的swap算法完成
+  ```
+  namespace std{
+    template<typename T>
+    void swap(T& a,T& b){
+      T temp(a);
+      a=b;
+      b=temp;
+    }
+  }
+  ```
+  只要类型T支持copying(通过copy构造函数和copy assignment操作符完成) ,缺省的swap实现代码
+  就会帮你置换类型为T的对象，你不需要为此另外再做任何工作。a复制到temp，b复制到a，以及temp
+  复制到b。但是对某些类型而言，这些复制动作无一必要:对它们而言swap缺省行为等于是把高速铁路
+  铺设在慢速小巷弄内。
++ 例如，"以指针指向一个对象，内含真正数据"那种类型。
+  ```
+  class WidgetImpl{//针对Widget数据而设计的class;
+    public:
+      ...
+    private:
+    int a,b,c;
+    std::vector<double> v;//意味复制时间很长
+    ...
+  };
+  class Widget{//这个class使用 pimpl手法   pimpl是"pointerωimplementation
+    public:
+      Widget(const Widget& rhs);
+      Widget& operator=(const Widget& rhs){
+        ...
+        *plmpl = *(rhs.plmpl);
+        ...
+      }
+      ...
+    private:
+      Widgetlmpl* plmpl;//指针，所指对象内含Widget数据。
+  };
+  ```
+  一旦要置换两个Widget对象值，我们唯一需要做的就是置换其plmpl指针。但是缺省的swap却做了太多
+  其他的事情。
+  所以我们可以将std::swap针对Widget特化。
+  ```
+  namespace std{
+    template<>
+    void swap<Widget>(Widget& a,Widget& b){
+      swap(a.pImpl,b.pImpl);
+    }
+  }
+  ```
+  这个函数一开始的"template<>"表示它是std::swap的一个全特化(totaltemplate specialization)
+  版本，函数名称之后的"<Widget>"表示这一特化版本系针对"T是Widget"而设计。
+  这个函数无法通过编译，因为它企图访问a和b内的private成员。所以我们需要我们令Widget声明一个
+  名为swap的public成员函数做真正的置换工作，然后将std::swap特化。
+  ```
+  class Widget{//这个class使用 pimpl手法   pimpl是"pointerωimplementation
+    public:
+      Widget(const Widget& rhs);
+      Widget& operator=(const Widget& rhs){
+        ...
+        *plmpl = *(rhs.plmpl);
+        ...
+      }
+      void swap(Widget& other){
+        using std::swap;
+        swap(pImpl,other.pImpl);
+      }
+      ...
+    private:
+      Widgetlmpl* plmpl;//指针，所指对象内含Widget数据。
+  };
+
+  namespace std{
+    template<>
+    void swap<Widget>(Widget& a,Widget& b){
+      swap(a.pImpl,b.pImpl);
+    }
+  }
+  ```
+  而如果我们上面的Widget和WidgetImpl是类模板而不是类的话，上面的方法就不管用了。那么该怎么办呢？
+  答案很简单，我们还是声明一个non-member swap让它调用member swap.但不再将那个non-member swap
+  声明为std::swap的特化版本或重载版本。
+  ```
+  namespace WidgetStuff{
+    ...
+    class Widget{//这个class使用 pimpl手法   pimpl是"pointerωimplementation
+      public:
+        Widget(const Widget& rhs);
+        Widget& operator=(const Widget& rhs){
+          ...
+          *plmpl = *(rhs.plmpl);
+          ...
+        }
+        void swap(Widget& other){
+          using std::swap;
+          swap(pImpl,other.pImpl);
+        }
+        ...
+      private:
+        Widgetlmpl* plmpl;//指针，所指对象内含Widget数据。
+    };
+    ...
+    template<typenarne T>
+    void swap(Widget<T>& a , Widget<T>& b){
+      a.swap(b);
+    }
+  }
+  为了使我们这里的方法适用于更多的情况，我们还是定义std内的swap特化版本
+  namespace std{
+    template<>
+    void swap<Widget>(Widget& a,Widget& b){
+      swap(a.pImpl,b.pImpl);
+    }
+  }
+  ```
++ 此刻，我们已经讨论过default swap、memberswaps、non-memberswap 、std::swap特化版本、
+  以及对swap的调用，现在让我把整个形势做个总结。首先，如果swap的缺省实现码对你的class或
+  class template提供可接受的效率，你不需要额外做任何事。任何尝试置换(swap)那种对象的人
+  都会取得缺省版本，而那将有良好的运作。其次，如果swap缺省实现版的效率不足(那几乎总是意味
+  你的class或template使用了某种pimpl手法) ，试着做以下事情：
+  1. 提供一个public swap成员函数，让它高效地置换你的类型的两个对象值。稍后我将解释，这个
+  函数绝不该抛出异常。
+  2. 在你的class或template所在的命名空间内提供一个non-member swap，并令它调用上述swap成员函数。
+  3. 如果你正编写一个class(而非class template) ，为你的class特化std::swap。并令它调用你的
+  swap成员函数。
+  4. 最后，如果你调用swap，请确定包含一个using声明式，以便让std::swap在你的函数内曝光可见，
+  然后不加任何namespace修饰符，赤裸裸地调用swap。(这样使得编译器使用名称查找法则以找到最适合
+  的swap版本)。即杜绝std::swap(objl, obj2);这种调用。
+  还有就是成员版的swap绝不可抛出异常。
++ 所以
+  1. 当 std::swap对你的类型效率不高时，提供一个swap成员函数，并确定这个函数不抛出异常。
+  2. 如果你提供一个member swap，也该提供一个non-member swap用来调用前者。对于classes
+  (而非templates) ，也请特化std::swap。
+  3. 调用swap时应针对std::swap使用using声明式，然后调用swap并且不带任何"命名空间资格修饰"。
+  4. "用户定义类型"进行std templates全特化是好的，但千万不要尝试在std内加入某些对std而言
+  全新的东西。

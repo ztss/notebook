@@ -703,3 +703,44 @@
   1. Class的设计就是type的设计。在定义一个新type之前，请确定你己经考虑过本条款覆盖的所有讨论主题。
 ## item20 Prefer pass-by-reference-to-const to pass-by-value.
 + 宁以pass-by-reference-to-const替换pass-by-value。
++ 有一种情况，如下一个类
+  ```
+  class Window{
+    public:
+      ...
+      std::string name() const;
+      virtual void display() const;
+  };
+
+  class WindowWithScrollBars: public Window{
+    ...
+    virtual void display() const;
+  };
+  然后有这样一个函数
+  void printNameAndDisplay(Window w)
+  {
+    std::cout << w.name();
+    w.display();
+  }
+  ```
+  上面这个函数有个缺陷，当你这样调用函数的时候
+  ```
+  WindowWithScrollBars wwsb;
+  printNameAndDisplay(wwsb);
+  ```
+  由于printNameAndDisplay函数是个传值函数，所以wwsb会被切割，它会变成window对象，而只会
+  调用window::display函数。所以为了解决切割问题，我们需要传递一个引用进去
+  ```
+  void printNameAndDisplay(const Window& w)
+  {
+    std::cout << w.name();
+    w.display();
+  }
+  ```
++ 然而，因此如果你有个对象属于内置类型(例如int) , pass by value往往比pass by reference
+  的效率高些。
++ 所以
+  1. 尽量以pass-by-reference-to-const替换pass-by-valueo前者通常比较高效，并可避免切割
+  问题 (slicing problem)。
+  2. 以上规则并不适用于内置类型，以及STL的迭代器和函数对象。对它们而言，pass-by-value往往
+  比较适当。

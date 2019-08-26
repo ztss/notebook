@@ -993,7 +993,7 @@
 
 # 实现
 + 过度使用转型可能导致代码变慢并且难以维护，又可能导致微妙难解的错误。
-## Postpone variable definitions as long as possible
+## item26 Postpone variable definitions as long as possible
 + 尽可能延后变量定义式的出现时间。
 + 只要定义了一个变量，那么在到达这个变量定义式的时候，就得承受构造成本，但变量离开作用域的时候
   就得承受析构成本。所以应该尽量避免这个情况。
@@ -1002,7 +1002,7 @@
   (和析构)非必要对象，还可以避免无意义的default构造行为。
 + 所以
   1. 尽可能延后变量定义式的出现。这样做可增加程序的清晰度并改善程序效率。
-## Minimize casting
+## item27 Minimize casting
 + 尽量少做转型动作。
 + C++有四种新式转换
   1. const_cast:cast通常被用来将对象的常量性转除(cast away the constness) 。它也是唯一有
@@ -1025,7 +1025,7 @@
   他们自己的代码内。
   3. 宁可使用 C++-style(新式)转型，不要使用旧式转型。前者很容易辨识出来，而且也比较有着分
   门别类的职掌。
-## Avoid returning handles to object internals
+## item28 Avoid returning handles to object internals
 + 避免返回handles指向对象内部成分。
 + 尽量避免const成员函数传出一个reference，因为这有可能导致函数的调用者可以修改那笔数据。
 + reference，指针和迭代器就是所谓的handles，即可以用来取得某个对象，而返回一个代表对象内部
@@ -1049,3 +1049,119 @@
 + 所以
   1. 避免返回handles(包括references、指针、迭代器)指向对象内部。遵守这个条款可增加封装性，
   帮助const成员函数的行为像个const，并将发生"虚吊号码牌"(dangling handles)的可能性降至最低。
+## item29 Strive for exception-safe
++ 为异常安全而努力是值得的。
++ 看以下这个希望用于多线程环境的class。
+  ```
+  class Prettymenu{
+    public:
+       ...
+       void changeBackground(std::istream& imgSrc);
+       ...
+    private:
+      Mutex mutex;
+      Image* bgImage;
+      int imageChanges;
+  };
+  void Prettymenu::changeBackground(std::istream& imgSrc){
+    lock(&mutex);
+    delete bgImage;
+    ++imageChanges;
+    bgimage=new Image(imgSrc);
+    unlock(&mutex);
+  }
+  ```
+  从异常安全性来看，上面的更改背景图的函数很糟糕。异常安全有两个条件
+  1. 当异常被抛出的时候，带有异常安全性的函数会不泄露任何资源。上面的函数就没有做到，因为一旦
+  new Image(imgSrc)导致了异常，那么对于unlock的调用就不会执行，于是互斥器就永远被把持了。
+  2. 不允许数据败坏，如果new Image(imgSrc)抛出异常，bgimage就指向一个已经被删除的对象，
+  而imageChanges也已经累加了，但其实并没有新的图像安装起来。
++ 为了防止资源泄露，加入确保互斥器被及时释放的方法。可以用一个资源管理类来管理mutex。如下
+  ```
+  void Prettymenu::changeBackground(std::istream& imgSrc){
+    Lock m1(&mutex);//使用资源管理类来管理mutex，即使new不成功，在函数执行完后，也会自动析构
+    delete bgImage;
+    ++imageChanges;
+    bgImage=new Image(imgSrc);
+  }
+  ```
++ 对于数据败坏，首先介绍以下异常安全函数提供的三个保证，一般而言异常安全函数只需要提供以下三个
+  之一即可。
+  1. 基本承诺，如果异常被抛出，程序内的任何事物仍然保持在有效状态下。
+  2. 强烈保证，如果异常被抛出，程序状态不改变。如果函数失败，程序会回复到调用函数之前的状态。
+  3. 不抛掷保证，承诺绝不抛出异常。
+  所以我们这个时候的抉择是应该为我们所写的函数提供哪一个保证。可能的话我们一般提供第三种保证，
+  但是对于绝大部分函数来说，往往选择的是基本保证和强烈保证。
+  比如说对于上面的函数我们如果给它提供强烈保证，那么只需要以智能指针管理资源即可。并且将累加
+  次数加一放在更换图像成功之后。
+  ```
+  class Prettymenu{
+    ...
+    std::tr1::shared_ptr<Image> bgImage;
+    ...
+  };
+
+  void Prettymenu::changeBackground(std::istream& imgSrc){
+    Lock m1(&mutex);
+    bgImage.reset(new Image(imgSrc));
+
+    ++imageChanges;
+  }
+  ```
+  还有一种叫做copy and swap的策略可以很简单的实现强烈保证，即把要修改的对象做出一个副本，在
+  副本上修改，只有副本改变成功后。再将这个副本和原对象置换即可。如下
+  ```
+  struct PMImpl{
+    std::tr1::shared_ptr<Image> bgImage;
+    int imageChanges;
+  };
+  class Prettymenu{
+    ...
+    private:
+      Mutex mutex;
+      std::tr1::shared_ptr<PMImpl> pImpl;
+    ...
+  };
+
+  void Prettymenu::changeBackground(std::istream& imgSrc){
+    using std::swap;
+    Lock ml(&mutex);
+    std::tr1::shared_ptr<PMImpl> pNew(new PMImpl(*pImpl));
+    pNew->bgImage.reset(new Image(imgSrc)); //修改副本
+    ++pNew->imageChanges;
+    swap(pImpl,pNew);
+  }
+  ```
++ 对于许多函数，异常安全性之基本保证是一个最好的选择。如果系统中有一个函数不具备异常安全性，
+  整个系统就不具备异常安全性，因为调用这个函数可能导致资源泄露或者数据结构败坏。
++ 在写代码的时候，要思考如何具备异常安全性，首先以对象管理资源，可以阻止资源泄露。然后挑选
+  三个异常安全保证中的一个实施于你所写的每一个函数身上。
++ 所以
+  1. 异常安全函数(Exception-safe functions)即使发生异常也不会泄漏资源或允许任何数据结构败坏
+  。这样的函数区分为三种可能的保证:基本型、强烈型、不抛异常型。
+  2. "强烈保证"往往能够以copy-and-swap实现出来，但"强烈保证"并非对所有函数都可实现或具备现
+  实意义。
+  3. 函数提供的"异常安全保证"通常最高只等于其所调用之各个函数的"异常安全保证"中的最弱者。
+## item30 Understand the ins and outs of inlining
++ 透彻了解inlining的里里外外。
++ inline函数通常一定被放置于头文件中。
++ 所以
+  1. 将大多数inlining限制在小型、被频繁调用的函数身上。这可使日后的调试过程和二进制升级(binary
+  upgradability)
+  2. 不要只因为function templates出现在头文件，就将它们声明为inline。
+## item31 Minimize compilation dependencies between files
++ 将文件间的编译依存关系降至最低。
++ 为声明式和定义式提供不同的头文件，所以程序库客户应该总是#include一个声明文件而非前置声明
+  若干函数。
+  ```
+  #include "datefwd.h"//这个头文件内声明但是没有定义class Date。
+  Date today();
+  void clearAppointments(Date d);
+  ```
++ Handle classes和Interface classes解除了接口和实现之间的藕合关系，从而降低文件间的编译依
+  存性(compilation dependencies)。
++ 所以
+  1. 持"编译依存性最小化"的一般构想是:相依于声明式，不要相依于定义式。基于此构想的两个手段是
+  Handle classes和Interface classes。
+  2. 程序库头文件应该以"完全且仅有声明式"(full and declaration-only forms)的形式存在。这种
+  做法不论是否涉及templates都适用。

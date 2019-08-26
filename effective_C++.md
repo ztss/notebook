@@ -1025,3 +1025,27 @@
   他们自己的代码内。
   3. 宁可使用 C++-style(新式)转型，不要使用旧式转型。前者很容易辨识出来，而且也比较有着分
   门别类的职掌。
+## Avoid returning handles to object internals
++ 避免返回handles指向对象内部成分。
++ 尽量避免const成员函数传出一个reference，因为这有可能导致函数的调用者可以修改那笔数据。
++ reference，指针和迭代器就是所谓的handles，即可以用来取得某个对象，而返回一个代表对象内部
+  数据的Handel，就会有降低对象封装性的危险。可能导致虽然调用const成员函数却仍然造成对象状态
+  被更改的后果。被声明为protected和private的函数也是对象内部的一部分，所以也不应该返回它们
+  的handels，即不该令成员函数返回一个指针指向访问级别较低的成员函数。因为这样的话后者的访问
+  级别就会提高如同前者。
++ 那么怎么避免这样的问题呢？我们可以在这些函数的返回类型上加上const，如下
+  ```
+  class Rectangle{
+    public:
+    ...
+       const Point& upperLeft() const {
+         return pdata->ulhc;
+       }
+  };
+  ```
++ 上面的做法当然可以使得问题得到缓解，但是还有另外一个问题，就是导致dangling handles(空悬)。
+  即handles所指向的东西已经不复存在。关键是，有个handle被传出去了，一旦如此就是暴露在handle
+  比所指对象更长寿的风险之下。
++ 所以
+  1. 避免返回handles(包括references、指针、迭代器)指向对象内部。遵守这个条款可增加封装性，
+  帮助const成员函数的行为像个const，并将发生"虚吊号码牌"(dangling handles)的可能性降至最低。

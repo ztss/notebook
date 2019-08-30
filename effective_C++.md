@@ -1165,3 +1165,51 @@
   Handle classes和Interface classes。
   2. 程序库头文件应该以"完全且仅有声明式"(full and declaration-only forms)的形式存在。这种
   做法不论是否涉及templates都适用。
+
+
+# 继承与面向对象设计
++ 继承可以是单一继承也可以是多重继承。
++ 每一个继承连接可是public，protected，private，也可以是virtual，non-virtual。
++ 成员函数的各个选项，virtual，non-virtual，pure-virtual。
++ 成员函数和其他语言特性的交互影响，缺省参数值与virtual函数有什么交互影响。
++ 继承如何影响C++的名称查找规则，设计选项有哪些，如果class的行为需要修改，virtual函数是
+  最佳选择么。
+## item32 Make sure public inheritance models "is-a"
++ 确定你的public继承塑模出is-a关系。
++ 以C++进行面向对象编程，最重要的一个规则是public inheritance意味着is-a(是一种)的关系。
++ 对于public继承，如果一个函数愿意接受一个base的实参，那么他也愿意接受一个派生类对象。对于
+  private继承则不同。
++ 所以
+  1. public继承意味着is-a，适用于base classes身上的每一件事情也适用于派生类身上，因为每一个
+  派生类对象也是一个base classes对象。
+## item33 Avoiding hiding inherited names
++ 避免遮掩继承而来的名称。
++ 如果你继承base class并且加上重载函数，而你又希望重新定义或者覆写其中一部分，那么你必须为
+  元贝会被遮掩得每个名称引入一个using声明式，否在某些你希望继承得名称会被遮掩。
++ 在public继承下，派生类必须继承base class得所有函数，因为public继承隐含了base和derived
+  之间得is-a关系，而在private继承中，derived只想继承函数得其中一个版本。如下
+  ```
+  class Base{
+    public:
+       virtual void mf1()=0;
+       virtual void mf1(int);
+       ...
+  };
+
+  class Derived:private Base{
+    public:
+       virtual void mf1()//这是一个转交函数(forwarding function)。         
+       {
+         Base::mf1();
+       }
+       ...
+  };
+  ...
+  Derived d;
+  int x;
+  d.mf1();//调用的是Derived::mf1
+  d.mf1(x);//失败，Base::mf1被遮掩了
+  ```
++ 所以
+  1. derived classes内的名称会遮掩base classes内的名称。在public继承下从来没有人希望如此。
+  2. 为了让被遮掩的名称再见天日，可使用using声明式或转变函数(forwarding functions)。

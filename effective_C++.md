@@ -1213,3 +1213,84 @@
 + 所以
   1. derived classes内的名称会遮掩base classes内的名称。在public继承下从来没有人希望如此。
   2. 为了让被遮掩的名称再见天日，可使用using声明式或转变函数(forwarding functions)。
+## item34 Differentiate between inheritance of interface and inheritance of implementation
++ 区分接口继承和实现继承。
++ public接口继承相当于继承声明，如果派生类继承实现，那么就要能够override它们所继承的实现。也
+  有一种情况就是继承函数的接口和实现，并且不允许override任何东西。
+  ```
+  class Shape{
+    public:
+       virtual void draw() const = 0;
+       virtual void error(const std::string& msg);
+       int objectID() const;
+       ...
+  };
+
+  class Rectangle:public Shape{...};
+  class Ellipse: public Shape{...};
+  ```
+  Shape是个抽象class;它的pure virtual函数draw使它成为一个抽象class。所以用户不能创建Shape
+  class的实体，只能创建它派生类的实体。
+  上面的继承，成员函数的接口总是会被继承。因为public继承的特性。上面的shape有三种函数声明方式。
+  不同的声明带来什么结果呢？
+  1. pure virtual函数必须被任何继承了它们的具象class重新声明，并且它们在抽象class中通常没有
+  定义。所以，声明一个pure virtual函数的目的是为了让derived classes只继承函数接口。Shape::draw
+  的声明式乃是对具象derived classes设计者说，"你必须提供一个draw函数，但我不干涉你怎么实现它。"
+  当然，pure virtual函数也可以提供定义。
+  2. 而impure virtual函数是为了让派生类继承该函数的接口和缺省实现。也就是说Shape::error的声
+  明式告诉derived classes的设计者，"你必须支持一个error函数，但如果你不想自己写一个，可以使用
+  Shape class提供的缺省版本"。想象以下的继承体系。
+  有一个基类定义了一个impure virtual函数，然后有两个派生类以public继承它，那么A,B类中这个
+  virtual函数的行为一样，那么我们就不需要重新实现这个impure virtual函数了。但是如果，现在
+  多了一个类C他也public继承基类，而他的virtual函数的行为和基类中定义的不一样。或许这里我们
+  可以使用上面的pure virtual，定义一个pure virtual函数
+  ```
+  class Airplane {
+    public:
+    virtual void fly(const Airport& destination} = 0;
+    ...
+  };
+  void Airplane::fly(const Airport& destination)//pure virtual函数实现
+  {
+    ...
+  }
+  class ModelA: public Airplane {
+    public:
+    virtual void fly(const Airport& destination)
+    { Airplane::fly(destination); }
+    ...
+  };
+  class ModelB: public Airplane {
+    public:
+    virtual void fly(const Airport& destination)
+    { Airplane::fly(destination); }
+    ...
+  };
+
+  class ModelC: public Airplane {
+    public:
+    virtual void fly(const Airport& destination);
+    ...
+  };
+
+  void ModelC::fly(const Airport& destination)
+  {
+    //将c飞机飞到目的地
+  }
+  ```
+  3. 最后是Shape中的non-virtual函数，如果基类中成员函数是个non-virtual函数，意味着它不打算
+  在派生类中有不同的行为。声明non-virtual函数的目的是为了令derived classes继承函数的接口及
+  一份强制性实现。由于non-virtual函数代表的意义是不变性Cinvariant)凌驾特异性(specialization)
+  ,所以它绝不该在derived class中被重新定义。
+  上面的三种pure virtual函数，impure virtual函数，non-virtual函数让我们可以精确的指定你想要
+  派生类继承的东西：只继承接口，继承接口和一份缺省实现，或是继承接口和一份强制实现。
++ 通常经验不足的class设计者经常犯两个错误。
+  1. 第一个是将所有函数声明为non-virtual。这使得派生类中没有空间进行特化工作，non-virtual析构
+  函数尤其会带来问题。
+  2. 另一个错误就是将所有成员函数声明为virtual。当然如果你想设计一个interface classes这是可行的
+  。
++ 所以
+  1. 接口继承和实现继承不同。在public继承之下，derived classes总是继承base class的接口。
+  2. pure virtual函数只具体指定接口继承。
+  3. impure virtual函数具体指定接口继承及缺省实现继承。
+  4. non-virtual函数具体指定接口继承以及强制性实现继承。

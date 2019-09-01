@@ -1294,3 +1294,146 @@
   2. pure virtual函数只具体指定接口继承。
   3. impure virtual函数具体指定接口继承及缺省实现继承。
   4. non-virtual函数具体指定接口继承以及强制性实现继承。
+## item35 Consider alternatives to virtual functions
++ 考虑virtual函数以外的其他选择。
++ 通过non-virtual interface手法实现template method模式。这个流派主张virtual函数应该是
+  private的。将healthvalue设计为public成员函数，并且让他成为non-virtual,并且调用一个
+  private virtual函数(doHealthValue)进行实际工作。
+  ```
+  class GameCharacter{
+    public:
+       int healthValue() const{
+         ...
+         int retVal = doHealthValue();
+         ...
+         return retVal;
+       }
+       ...
+    private:
+       virtual int doHealthValue() const{//派生类可以重新定义它
+         ...
+       }
+  };
+  ```
+  这一手法令用户通过public non-virtual成员函数间接调用private virtual函数，称为non-virtual
+  interface(NVI)手法。把这个non-virtual函数称为virtual函数的wrapper。
++ 第二种替代virtual函数的是通过function pointers实现strategy模式。即我们可以要求每个人物的
+  构造函数接受一个指针，指向一个健康计算函数，而我们可以调用该函数进行实际计算。
+  ```
+  class GameCharacter;//前置声明
+  int defaultHealthValueCalc(const GameCharacter& gc);
+  class GameCharacter{
+    public:
+       typedef int (*HealthCalcFunc) (const GameCharacter&);
+       explicit GameCharacter(HealthCalcFunc hcf = defaultHealthValueCalc) : healthFunc(hcf)
+       {}
+       int healthValue() consts{
+         return healthFunc(*this);
+       }
+       ...
+    private:
+       HealthCalcFunc healthFunc;
+  };
+  ```
+  运用函数指针替换virtual函数，其优点(像是"每个对象可各自拥有自己的健康计算函数"和"可在运行
+  期改变计算函数" )是否足以弥补缺点(例如可能必须降低GameCharacter封装性) ，是你必须根据每个
+  设计情况的不同而抉择的。因为非成员函数想访问class的non-public成员必须减弱class的封装。
++ 第三种是藉由tr1::function完成strategy模式，这里我们不再使用函数指针，而是改用一个类型为
+  tr1::function的对象。
+  ```
+  class GameCharacter;//前置声明
+  int defaultHealthValueCalc(const GameCharacter& gc);
+
+  class GameCharacter{
+    public:
+       //HealthCalcFunc可以是任何"可调用物" (callable entity) ，可被调用并接受
+       //任何兼容于GameCharacter之物,返回任何兼容于int的东西。详下。
+       typedef std::tr1::function<int (const GameCharacter&)> HealthCalcFunc;
+       explicit GameCharacter(HealthCalcFunc hcf = defaultHealthValueCalc) : healthFunc(hcf)
+       {}
+       int healthValue() consts{
+         return healthFunc(*this);
+       }
+       ...
+    private:
+       HealthCalcFunc healthFunc;
+  };
+  ```
+  所谓兼容，意思是这个可调用物的参数可被隐式转换为const GameCharacter&，而其返回类型可被隐式
+  转换为int。
+  ```
+  short calcHealth(const GameCharacter&);//健康计算函数
+
+  struct HealthCalcculator{//为计算健康而设计的函数对象
+    int operator() (const GameCharacter&) const{
+      ...
+    }
+  };
+
+  class GameLevel{
+    public:
+       float health(const GameCharacter&) const;//成员函数，用以计算健康
+       ...
+  };
+
+  class EvilBadGuy: public GameCharacter{
+    ...
+  };
+
+  class EyeCandyCharacter: public GameCharacter{
+    ...
+  };
+
+  EvilBadGuy ebg1(calcHealth);//人物1，使用某个函数计算健康
+
+  EyeCandyCharacter ecc1(HealthCalcculator());//人物2，使用某个函数对象计算健康
+
+  GameLevel currentLevel;
+  ...
+  EvilBadGuy ebg2(std::tr1::bind(&GameLevel::health,currentLevel,_1));//人物3 使用某个
+  //成员函数计算健康
+  ```
+  tr1::bind的作为:它指出ebg2的健康计算函数应该总是以currentLevel作为Gamelevel对象。
++ 还有一种古典的strategy模式。
+  这图只是告诉你GameCharacter是某个继承体系的根类，体系中的EvilBadGuy和EyeCandyCharacter
+  都是derived classes;HealthCalcFunc是另一个继承体系的根类，体系中的SlowHealthLoser 和
+  FastHealthLoser都是derived classes，每一个GameCharacter对象都内含一个指针，指向一个来
+  自HealthCalcFunc继承体系的对象。
+  ```
+  class GameCharacter;
+  class HealthCalcFunc{
+    public:
+       ...
+       virtual int calc(const GameCharacter& gc) const{...}
+       ...
+  };
+
+  HealthCalcFunc defaultHealthValueCalc;
+
+  class GameCharacter{
+    public:
+       explicit GameCharacter(HealthCalcFunc* phcf = &defaultHealthCalc):
+       pHealthCalc(phcf){}
+       int healthValue() consts{
+         return pHealthCalc->calc(*this);
+       }
+       ...
+    private:
+       HealthCalcFunc* pHealthCalc;
+  };
+  ```
++ 所以，本条框的根本忠告在于，当你为解决问题而寻找某个设计方法时，不姑考虑virtual函数的替代方案。
+  1. 使用non-virtual interface(NYI)手法，那是Template Method设计模式的一种特殊形式。它以
+  public non-virtual成员函数包裹较低访问性(private或protected)的virtual函数。
+  2. 将virtual函数替换为"函数指针成员变量"，这是Strategy设计模式的一种分解表现形式。
+  3. 以trl::function成员变量替换virtual函数，因而允许使用任何可调用物(callable entity)搭配
+  一个兼容于需求的签名式。这也是Strategy设计模式的某种形式。
+  4. 将继承体系内的virtual函数替换为另一个继承体系内的virtual函数。这是Strategy设计模式的
+  传统实现手法。
++ 所以
+  1. virtual函数的替代方案包括NYI手法及Strategy设计模式的多种形式。NYI手法自身是一个特殊形
+  式的Template Method设计模式。
+  2. 将机能从成员函数移到class外部函数，带来的一个缺点是，非成员函数无法访问class的non-public
+  成员。
+  3. trl::function对象的行为就像一般函数指针。这样的对象可接纳"与给定之目标签名式(target
+  signature)兼容"的所有可调用物(callable entities)。

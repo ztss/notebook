@@ -1437,3 +1437,13 @@
   成员。
   3. trl::function对象的行为就像一般函数指针。这样的对象可接纳"与给定之目标签名式(target
   signature)兼容"的所有可调用物(callable entities)。
+## item36 Never redefine an inherited non-virtual function.
++ 绝不重新定义继承而来的non-virtual函数。
++ 非虚函数是静态绑定的，而虚函数是动态绑定的。
++ 所以，如果你正在编写class D并重新定义继承自class B的non-virtual函数mf，D对象很可能展现出
+  精神分裂的不一致行径。更明确地说，当mf被调用，任何一个D对象都可能表现出B或D的行为:决定因素
+  不在对象自身，而在于"指向该对象之指针"当初的声明类型。
++ 所以，为了避免上面的结果，我们得到一个结论，任何时候都不该重新定义一个继承而来的non-virtual
+  函数。
++ 所以
+  1. 绝对不要重新定义继承而来的non-virtual函数。

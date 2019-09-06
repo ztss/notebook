@@ -1447,3 +1447,67 @@
   函数。
 + 所以
   1. 绝对不要重新定义继承而来的non-virtual函数。
+## item37 Never redefine a function's inherited default parameter value.
++ 绝不重新定义继承而来的缺省参数值。
++ 静态绑定又叫前期绑定，动态绑定又名为后期绑定。virtual函数系动态绑定，而缺省参数值却是静态
+  绑定。对象的所谓静态类型，就是它在程序中被声明时所采用的类型。考虑以下继承体系
+  ```
+  class Shape{
+    public:
+       enum ShapeColor {Red,Green,Blue};
+       virtual void draw(ShapeColor color = Red) const=0;
+       ...
+  };
+
+  class Rectangle: public Shape{
+    public:
+       virtual void draw(ShapeColor color =Green) const;
+       ...
+  };
+
+  class Circle: public Shape{
+    public:
+       virtual void draw(ShapeColor color) const;
+       ...
+  };
+
+  Shape* ps;//静态类型为Shape*
+  Shape* pc =new Circle;//静态类型为Shape*
+  Shape* pr = new Rectangle;//静态类型为Shape*
+  动态类型可以表现出一个对象将有什么行为，动态类型可以在程序执行过程中改变，通常由赋值操作
+  完成
+  ps=pc;
+  ps=pr;
+  Virtual函数系动态绑定而来，意思是调用一个virtual函数时，究竟调用哪一份函数实现代码，取决
+  于发出调用的那个对象的动态类型:
+  pc->draw(Shape::Red); //调用Circle::draw(Shape::Red)
+
+  pr->draw(); // 调用Rectangle::draw(Shape::Red)
+  之所这样是因为缺省参数值是静态绑定，它来自于对象的声明式，即shape，虽然pr的动态类型是
+  Rectangle。
+  ```
+  可以使用NVI来解决上面的问题
+  ```
+  class Shape{
+    public:
+       enum ShapeColor {Red,Green,Blue};
+       virtual void draw(ShapeColor color = Red) const{
+         doDraw(color);
+       }
+       ...
+    private:
+       virtual void doDraw(ShapeColor color) const=0;
+  };
+
+  class Rectangle: public Shape{
+    public:
+       ...
+    private:
+       virtual void doDraw(ShapeColor color) const;
+  };
+  ```
+  由于non-virtual函数应该绝对不会被派生类覆盖，所以这个设计可以使得Draw函数的color缺省参数值
+  总为Red。
++ 所以
+  1. 绝对不要重新定义一个继承而来的缺省参数值，因为缺省参数值都是静态绑定，而virtual函数一一
+  你唯一应该覆写的东西一一却是动态绑定。

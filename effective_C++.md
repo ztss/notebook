@@ -1511,3 +1511,62 @@
 + 所以
   1. 绝对不要重新定义一个继承而来的缺省参数值，因为缺省参数值都是静态绑定，而virtual函数一一
   你唯一应该覆写的东西一一却是动态绑定。
+## item38 Model "has-a" or "is-implemented-in-terms-of" through composition
++ 通过复合塑模出has-a或"根据某物实现出"。
++ Person对象由string，Address,PhoneNumber构成。这就是一种复合关系。是一种has-a关系或者
+  is-implemented-in-terms-of关系。
++ 所以
+  1. 复合(composition)的意义和public继承完全不同。
+  2. 在应用域(application domain)，复含意味has-a(有一个)。在实现域(implementation domain)，
+  复合意味is-implemented-in-terms-of(根据某物实现出)。
+## item39 Use private inheritance judiciously
++ 明智而审慎地使用private继承。
++ private继承不意味is-a关系，如果classes之间的继承关系是private. 编译器不会自动将一个derived
+  class对象(例如Student)转换为一个base class对象(例如Person)。
++ 如果你让classD以private形式继承class B，你的用意是为了采用class B内已经备妥的某些特性，不是
+  因为B对象和D对象存在有任何观念上的关系。 private继承纯粹只是一种实现技术(这就是为什么继承自一个
+  private base class的每样东西在你的class内都是private: 因为它们都只是实现枝节而已)。
++ Private继承意味is-implemented-in-terms-of(根据某物实现出)。所以，尽可能使用复合，必要时才
+  使用private继承。
++ 这种必要的情况在于所谓的EBO(emptybase optimization;空白基类最优化)。
++ 所以
+  1. Private继承意味is-implemented-in-terms of(根据某物实现出)。它通常比复合(composition)的
+  级别低。但是当derived class需要访问protected base class的成员，或需要重新定义继承而来的
+  virtual函数时，这么设计是合理的。
+  2. 和复合(composition)不同， private继承可以造成empty base最优化。这对致力于"对象尺寸最小化"
+  的程序库开发者而言，可能很重要。
+## item40 Use multiple inheritance judiciously
++ 明智而审慎地使用多重继承。
++ 查看以下的继承体系
+  ```
+  class BorrowableItem{
+    public:
+       void checkout();
+       ...
+  };
+
+  class ElectronicGadget{
+    private:
+       bool checkout() const;
+       ...
+  };
+
+  class MP3Player: public BorrowableItem, public ElectronicGadget{
+    ...
+  };
+  MP3Player mp;
+  mp.checkout();//不知道调用的是哪个checkout
+  ```
+  为了消除歧义，需要这样
+  ```
+  mp.BorrowableItem::checkout();
+  ```
++ 所以
+  1. 多重继承比单一继承复杂。它可能导致新的歧义性，以及对virtual继承的需要。
+  2. virtual继承会增加大小、速度、初始化(及赋值)复杂度等等成本。如果virtual base classes
+  不带任何数据，将是最具实用价值的情况。
+  3. 多重继承的确有正当用途。其中一个情节涉及"public继承某个Interface class" 和 "private
+  继承某个协助实现的class"的两相组合。
+
+
+# 模板和泛型编程

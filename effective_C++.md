@@ -1570,3 +1570,57 @@
 
 
 # 模板和泛型编程
++ C++ template机制自身是一部完整的图灵机(Turing-complete) :它可以被用来计算任何可计算的值。
+## Understand implicit interfaces and compile-time polymorphism
++ 了解隐式接口和编译期多态。
++ "运行期多态"和"编译期多态"之间的差异，它类似于"哪一个重载函数该被调用"(发生在编译期)和"哪
+  一个 virtual 函数该被绑定"(发生在运行期)之间的差异。
++ 通常显式接口由函数的签名式(也就是函数名称、参数类型、返回类型)构成。隐式接口就完全不同了。
+  它并不基于函数签名式，而是由有效表达式(valid expressions)组成。
+  ```
+  template<typename T>
+  void doProcessing( T& w){
+    if(w.size() > 10 && w != someNastyWidget){
+      ...
+    }
+  }
+  ```
+  上面的if(w.size() > 10 && w != someNastyWidget)即为隐式接口。
+  本例看来w的类型T好像必须支持size，normalize和swap成员函数、copy构造函数(用以建立temp) 、
+  不等比较(inequality comparison ，用来比较someNasty-Widget)。这一组表达式(对此template
+  而言必须有效编译)便是T必须支持的一组隐式接口(implicit interface)。
++ 所以
+  1. classes和templates都支持接口(interfaces)和多态(polymorphism)。
+  2. 对classes而言接口是显式的(explicit).以函数签名为中心。多态则是通过virtual函数发生于
+  运行期。
+  3. 对template参数而言，接口是隐式的(implicit).奠基于有效表达式。多态则是通过template具
+  现化和函数重载解析(function overloading resolution)发生于编译期。
+## Understand the two meanings of typename
++ 了解typename的双重意义。
++ 看以下的代码
+  ```
+  template<typename C>
+  void print2nd(const C& container){
+    if(container.size()>=2){
+      C::const_iterator iter(container.begin());
+      ++iter;
+      int value=*iter;
+      std::cout << value;
+    }
+  }
+  ```
+  上面的代码并不合理，因为iter声明式只有在C::const_iterator是个类型的时候才合理。所以我们必须
+  明确指示他是个类型
+  ```
+  template<typename C>
+  void print2nd(const C& container){
+    if(container.size()>=2){
+      typename C::const_iterator iter(container.begin());
+      ++iter;
+      int value=*iter;
+      std::cout << value;
+    }
+  }
+  ```
++ 任何时候当你想要在template中指涉一个嵌套从属类型名称，就必须在紧临它的前一个位置放上关键字
+  typename。嵌套从属类型即上面例子中C中所含有的类型。

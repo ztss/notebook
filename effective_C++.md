@@ -1703,3 +1703,177 @@
   1. 请使用member function templates(成员函数模板)生成"可接受所有兼容类型" 的函数。
   2. 如果你声明membertemplates用于"泛化copy构造"或"泛化 assignment操作" 你还是需要声明正常
   的copy构造函数和Copyassignmen操作符。
+## item46 Define non-member functions inside templates when type conversions are desired
++ 需要类型转换时请为模板定义非成员函数。
++ 参考24中为了使得我们得乘法满足交换律，在类模板中我们必须这样定义我们得操作符
+  ```
+  template<typename T>
+  class Rational{
+    public:
+       ...
+       friend const Rational operator*(const Rational& lhs,const Rational& rhs){
+         ...
+       }
+  };
+  ```
+  为了让类型转换可能发生于所有实参身上，我们需要一个non-member函数(条款24) ;为了令这个函数被
+  自动具现化，我们需要将它声明在class内部:而在class内部声明non-member函数的唯一办法就是:
+  令它成为一个freiend函数。
+  而定义在class内部得函数自动成为友元函数，为了使得友元声明更好，尽量使得operator*不做任何事情
+  所以我们需要一个模板辅助函数来完成operator*中的操作。
+  ```
+  template<typename T> class Rational;
+
+  template<typename T>
+  const Rational<T doMultiply(const Rational& lhs,const Rational& rhs)
+
+  template<typename T>
+  class Rational{
+    public:
+       ...
+       friend const Rational operator*(const Rational& lhs,const Rational& rhs){
+         return doMultiply(lhs,rhs);
+       }
+  };
+  ```
+  许多编译器实质上会强迫你把所有template定义式放进头文件内。
++ 所以
+  1. 当我们编写一个class template，而它所提供之"与此template相关的"函数支持"所有参数之隐式
+  类型转换"时，请将那些函数定义为"class template内部的friend函数"。
+## item47 Use traits classes for information about types.
++ 请使用traits classes表现类型信息。
++ STL主要由"用以表现容器、选代器和算法"的templates构成，但也覆盖若干工具性templates。
++ C++中五种迭代器
+  ```
+  struct input_iterator_tag {};
+  struct output iterator tag {};
+  struct forward_iterator_tag: public input_iterator_tag {};
+  struct bidirectional_iterator_tag: public forward_iterator_tag {};
+  struct random_access_iterator_tag: public bidirectional iterator_tag {};
+  ```
++ 我们实现一个迭代器前向移动或者后向移动的函数
+  ```
+  template<typename IterT,typename DistT>
+  void advance(IterT& iter,DistT d){
+    if(iter is a random access iterator){
+      iter += d;
+    }
+    else{
+      if (d >= 0) { while (d--) ++iter; }
+      else { while (d++) - -iter; }
+    }
+  }
+  ```
+  这种做法首先必须判断iter是否为random access迭代器,traits让你得以进行的事:它们允许你在编译期间
+  取得某些类型信息。
+  triat是一种技术，它对内置(built-in)类型和用户自定义(user-defined)类型的表现必须一样好。举个例子，
+  如果上述advance收到的实参是一个指针(例如const char*和一个int，上述advance仍然必须有效运作，
+  那意味traits技术必须也能够施行于内置类型如指针身上。
+  其中针对选代器者被命名为iterator traits:
+  使用标准库中的iterator_trait可以实现上面的advance
+  ```
+  template<typename IterT,typename DistT>
+  void advance(IterT& iter,DistT d){
+    if(typeid(typename std: :iterator_traits<工terT>::iterator_category)==typeid(std::random_access_iterator_tag){
+      iter += d;
+    }
+    else{
+      if (d >= 0) { while (d--) ++iter; }
+      else { while (d++) - -iter; }
+    }
+  }
+  ```
+  IterT类型在编译期间获知，所以 terator_traits<IterT>::iterator_category也可在编译期间确定。
+  但if语句却是在运行期才会核定。
+  我们真正想要的是一个条件式(也就是一个if. ..else语句)判断"编译期核定成功"之类型。所以
+  可以使用重载技术。先重载几个函数
+  ```
+  template<typename IterT, typename DistT>
+  void doAdvance(IterT& iter, DistT d ,std::random access iterator tag){
+    iter+=d;
+  }
+
+  template<typename IterT, typename DistT>
+  void doAdvance(IterT& iter, DistT d ,std::bidirectional iterator tag){
+    if(d>=0){ while(d--) ++iter;}
+    else{ while(d++) --iter;}
+  }
+
+  template<typename IterT, typename DistT>
+  void doAdvance(IterT& iter, DistT d ,std::input iterator tag){
+    if(d<0){
+      throw std::out_of_range("Negetive distance");
+    }
+    while(d++) --iter;
+  }
+  ```
+  有了这些doAdvance重载版本，advance需要做的只是调用它们并额外传递一个对象，后者必须带有适
+  当的迭代器分类。于是编译器运用重载解析机制(overloading resolution)调用适当的实现代码:
+  ```
+  template<typename IterT,typename DistT>
+  void advance(IterT& iter,DistT d){
+    doAdvance(iter,d,typename std::iterator traits<IterT>::iterator category())
+  }
+  ```
++ 所以我们可以这样的使用一个trait class
+  1. 建立一组重载函数(身份像劳工)或函数模板(例如doAdvance)，彼此间的差异只在于各自的traits参数。
+  令每个函数实现码与其接受之traits信息相应和。
+  2. 建立一个控制函数(身份像工头)或函数模板(例如advance)，它调用上述那些"劳工函数"并传递traits
+  class 所提供的信息。
++ 所以
+  1. Traits classes使得"类型相关信息"在编译期可用。它们以templates和"templates特化"完成实现。
+  2. 整合重载技术(overloading)后， traits classes有可能在编译期对类型执行if...else测试。
+## item48 Be aware of template metaprogramming
++ 认识template元编程。
++ Template metaprogramming(TMP，模板元编程)是编写template-based C++程序并执行于编译期的过程。
++ TMP有两个伟大的效力。第一，它让某些事情更容易。如果没有它，那些事情将是困难的，甚至不可能的。
+  二，由于template metaprograms执行于C++编译期，因此可将工作从运行期转移到编译期。这导致的一个
+  结果是，某些错误原本通常在运行期才能侦测到，现在可在编译期找出来。另一个结果是，使用TMP的C++
+  程序可能在每一方面都更高效:较小的可执行文件、较短的运行期、较少的内存需求。当然这样编译时间
+  就增长了。
++ TMP并没有真正的循环构件，所以循环效果系藉由递归(recursion)完成。TMP主要是个"函数式语言"
+  (functionallanguage)。TMP的递归甚至不是正常种类，因为TMP循环并不涉及递归函数调用，而是
+  涉及"递归模板具现化"(recursive template instantiation)。
++ TMP的起手程序是在编译期计算阶乘(factorial)。
+  ```
+  template<unsigned n>
+  struct Factorial{
+    enum { value=n* Factorial<n-1>::value };
+  };
+
+  template<>
+  struct Factorial<0>{
+    enum { value=1 };
+  };
+  ```
+  有了这个template metaprogram(其实只是个单一的template metafunction Factorial)，
+  只要你指涉Factorial<n>::value就可以得到n阶乘值。
+  可以这样使用Factorial
+  ```
+  int main(){
+    std::cout << Factorial<5>::value;
+  }
+  ```
++ 为求领悟TMP之所以值得学习，很重要的一点是先对它能够达成什么目标有一个比较好的理解。
+  下面举出三个例子。
+  1. 确保量度单位正确。
+  2. 优化矩阵运算。
+  ```
+  typedef SquareMatrixtr<double，10000> BigMatrix;
+  BigMatrix ml , m2, m3，m4，m5;
+  ...
+  BigMatrix result = ml * m2 * m3 * m4 * m5;
+  ```
+  以"正常的"函数调用动作来计算result，会创建4个暂时性矩阵，每一个用来存储对operator*的调用结果。
+  如果使用高级、与TMP相关的template技术，即所谓expression templates，就有可能消除那些临时对象
+  并合并循环，这一切都无需改变客户端的用法(像上面那样)。于是TMP软件使用较少的内存，执行速度又有
+  戏剧性的提升。
+  3. 可以生成客户定制之设计模式(custom design pattern)实现品。
++ 所以
+  1. Template metaprogramming(TMP，模板元编程)可将工作由运行期移往编译期，因而得以实现早期错
+  误侦测和更高的执行效率。
+  2. TMP可被用来生成"基于政策选择组合"(based on combinations of policy choices)的客户定制
+  代码，也可用来避免生成对某些特殊类型并不适合的代码。
+
+
+# 定制new和delete

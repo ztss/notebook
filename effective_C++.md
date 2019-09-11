@@ -1624,3 +1624,82 @@
   ```
 + 任何时候当你想要在template中指涉一个嵌套从属类型名称，就必须在紧临它的前一个位置放上关键字
   typename。嵌套从属类型即上面例子中C中所含有的类型。
++ "typename"必须作为嵌套从属类型名称的前缀词"这一规则的例外是，typename不可以出现在base
+  classes list内的嵌套从属类型名称之前，也不可在member initialization list(成员初值列)中作
+  为base class修饰符。
++ 所以
+  1. 声明template参数时，前缀关键字class和typename可互换。
+  2. 请使用关键字typename标识嵌套从属类型名称:但不得在base class lists(基类列)或member
+  initialization list(成员初值列)内以它作为base class修饰符。
+## item43 Know how to access names in templatized base classes
++ 学习处理模板化基类内的名称。
++ 所以
+  1. 可在derived class templates内通过"this->"指涉base class templates内的成员名称，或藉由
+  一个明白写出的"base class资格修饰符"完成。
+## item44 Factor parameter-independent code out of templates
++ 将与参数无关的代码抽离templates。
++ Templates是节省时间和避免代码重复的一个奇方妙法。不再需要键入20个类似的classes而每一个带有15
+  个成员函数，你只需键入一个class template，留给编译器去具现化那20个你需要的相关classes和300个
+  函数。
++ 但是如果不小心的使用template可能会导致code bloat，即代码膨胀。
++ 有一种工具叫做commonality and variability analysis，即共性与变性分析。
++ 考虑下面的template
+  ```
+  template<typename T,std::size_t n>
+  class SquareMatrix{
+    public:
+       ...
+       void invert();
+  };
+
+  SquareMatrix<double,5> sm1;
+  sm1.invert();
+  SquareMatrix<double,10> sm2;
+  ...
+  sm2.invert();
+  ```
+  这会具现化两份invert。这些函数并非完完全全相同，因为其中一个操作的是5*5矩阵而另一个操作的
+  是10*10矩阵，但除了常量5和10，两个函数的其他部分完全相同。这是template引出代码膨胀的一个
+  典型例子。
++ Templates生成多个classes和多个函数，所以任何template代码都不该与某个造成膨胀的template
+  参数产生相依关系。
++ 因非类型模板参数(non-type template parameters)而造成的代码膨胀，往往可消除，做法是以函
+  数参数或class成员变量替换template参数。
++ 因类型参数(type parameters)而造成的代码膨胀，往往可降低，做法是让带有完全相同二进制表述
+  (binary representations)的具现类型(instantiation types)共享实现码。
+## item45 Use member function templates to accept "all compatible types"
++ 运用成员函数模板接受所青兼容类型。
++ 所谓智能指针是行为像指针的对象，并且提供指针没有的机能。STL容器的迭代器几乎总是智能指针。
++ 下面列出一些真实指针之间的隐式转换
+  ```
+  class Top{...};
+  class Middle: public Top{...};
+  class Bottom: public Middle{...};
+  Top* pt1 = new Middle;//将Middle* 转换为top*
+  Top* pt2 = new Bottom;//将bottom*转换为top*
+  const top* pct2 = pt1;//将Top*转换为const top*
+  ```
++ 考虑以下的模板类
+  ```
+  template<typename T>
+  class SmartPtr{
+    public:
+       template<typename U>
+       SmartPtr(const SmartPtr<U>& other);//这是一个member template。为了生成拷贝构造函数
+  };
+  ```
+  以上代码的意思是，对任何类型T和任何类U，这里可以根据SmartPtr<U>生成一个SmartPtr<T>一一因为
+  Smartptr<T>有个构造函数接受一个SmartPtr<U>参数。这一类构造函数根据对象U创建对象t(例如根据
+  SmartPtr<U>创建一个SmartPtr<T>，而U和v的类型是同一个template的不同具现体，有时我们称之为泛化
+  (generalized)copy构造函数。
+  在模板化构造函数(templatized constructor)中略去explicit。
+  我们希望根据一个Smartptr<Bottom>创建一个SmartPtr<Top>，却不希望根据一个SmartPtr<Top>创建一个
+  SmartPtr<Bottom>，因为那对public继承而言(见条款32)是矛盾的。
+  上面的函数也称为member function template。
++ 在class内声明泛化copy构造函数(是个member template)并不会阻止编译器生成它们自己的copy构造函数、
+  (一个non-template)，所以如果你想要控制copy构造的方方面面，你必须同时声明泛化copy构造函数和"正
+  常的"copy构造函数。
++ 所以
+  1. 请使用member function templates(成员函数模板)生成"可接受所有兼容类型" 的函数。
+  2. 如果你声明membertemplates用于"泛化copy构造"或"泛化 assignment操作" 你还是需要声明正常
+  的copy构造函数和Copyassignmen操作符。

@@ -1877,3 +1877,55 @@
 
 
 # 定制new和delete
++ 了解c++内存管理例程的行为。
+## item49 Understand the behavior of the new-handler
++ 了解new-handler的行为。
++ 当operator new无法满足某一内存分配需求时，他会抛出异常。
+  ```
+  namespace std{
+    typedef void(*new_handler);
+    new_handler set_new_handler(new_handler p) throw();
+
+  }
+  函数声明式最后的throw()表示该函数不会抛出任何异常。
+  new_handler是个typedef，定义一个指针指向一个没有参数也不返回任何东西的函数。
+  set_new_handler的参数是个指针，指向operator new无法分配足够内存时该被调用的函数。
+  ```
++ 当operator new无法满足内存申请时，它会不断调用new-handler函数，直到找到足够内存。
++ 一个设计良好的new-handler函数必须做下面的事情
+  1. 让更多的内存可以被使用。
+  2. 安装另一个new-handler。如果目前这个new-handler无法取得更多可用内存， 或许它知道另
+  外哪个new-handler有此能力。果真如此，目前这个new-handler就可以安装另外那个new-handler
+  以替换自己(只要调用 set new handler) 。
+  3. 卸除new-handler。也就是将null指针传给set new handler。一旦没有安装任何new-handler
+  ，operator new会在内存分配不成功时抛出异常。
+  4. 抛出bad_alloc。
+  5. 不返回。
++ 如果我们这么设置new-handler
+  ```
+  int main(){
+    std::set_new_handler(OutOfMem);
+    ...
+  }
+  ```
+  然后你希望根据被分配物属于那个class来处理内存分配失败。
+  ```
+  class X{
+    public:
+    static void OutOfMemory();
+  };
+
+  class Y{
+    public:
+    static void OutOfMemory();
+  };
+
+  X* p1=new X;//分配不成功，调用X::OutOfMemory
+  Y* p2=new Y;//分配不成果，调用Y::OutOfMemory
+  ```
+  C++ 并不支持class专属之new-handlers.但其实也不需要。你可以自己实现出这种行为。只需令
+  每一个class提供自己的set new handler和operator new即可。
++ 所以
+  1. set new handler允许客户指定一个函数，在内存分配无法获得满足时被调用。
+  2. Nothrow new是一个颇为局限的工具，因为它只适用于内存分配:后继的构造函数调用还是可能
+  抛出异常。

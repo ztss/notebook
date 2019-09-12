@@ -1929,3 +1929,156 @@
   1. set new handler允许客户指定一个函数，在内存分配无法获得满足时被调用。
   2. Nothrow new是一个颇为局限的工具，因为它只适用于内存分配:后继的构造函数调用还是可能
   抛出异常。
+## item50 Understand when it makes sense to replace new and delete.
++ 了解new和delete的合理替换时机。
++ 首先，怎么会有人想要替换编译器提供的operator new或 operator delete呢?下面是三个最常
+  见的理由:
+  1. 用来检测运用上的错误。
+  2. 为了强化效用。因为编译器的new和delete为了适用于大多数情况，所以采取的是中庸之道。
+  是为了对每种情况都比较好，所以有时候我们如果定制new和delete，往往可以取得巨大的效用
+  提升。
+  3. 为了收集使用上的统计数据。
+  4. 为了增加分配和归还的速度。
+  5. 为了降低缺省内存管理器带来的空间额外开销。
+  6. 为了弥补缺省分配器中的非最佳齐位(suboptimal alignment)。在x86体系结构上doubles的
+  访问最是快速一如果它们都是8-byte齐位。但是编译器自带的operator news并不保证对动态分
+  配而得的doubles采取8-byte齐位。这种情况下，将缺省的operator new替换为一个8-byte齐位
+  保证版，可导致程序效率大幅提升。
+  7. 为了将相关对象成簇集中。
+  8. 为了获得非传统的行为。
++ 下面给出一个定制的new
+   ```
+   static const int signature = 0xDEADBEEF;
+   typedef unsigned char Byte;
+
+   void* operator new(std::size_t size) throw(std::bad_alloc){
+     using namespace std;
+     size_t realSize =size+2*sizeof(int);//增加大小可以塞入两个signatures
+
+     void* pMem = malloc(realSize);
+     if(!pMem) throw bad_alloc();
+
+     //将signatures写入内存的最前段落和最后段落
+     *(static_cast<int*>(pMem))=signature;
+     *(reinterpret_cast<int*>(static_cast<Byte*>(pMem)+realSize-sizeof(int)))
+     = signature;
+     //返回指针，指向恰位于第一个signature之后的内存位置
+     return static_cast<Byte*>(pMem)+sizeof(int);
+   }
+   ```
+   上面的函数有一些小问题。比如说齐位问题。因为C++要求所有operator news返回的指针都有
+   适当的对齐(取决于数据类型)。malloe就是在这样的要求下工作，所以令operatornew返回一个
+   得自malloe的指针是安全的。然而上述operator new中我并未返回一个得自malloc的指针，而
+   是返回一个得自malloc且偏移一个int大小的指针。没人能够保证它的安全!
++ 像齐位(alignment)这一类技术细节，正可以在那种"因其他纷扰因素而被程序员不断抛出异常"的
+  内存管理器中区分出专业质量的管理器。写一个总是能够运作的内存管理器并不难，难的是它能够
+  优良地运作。一般而言我建议你在必要时才试着写写看。
++ 所以
+  1. 有许多理由需要写个自定的new和delete ，包括改善效能、对heap运用错误进行调试、收集
+  heap使用信息。
+## item51 Adhere to convention when writing new and delete
++ 编写new和delete时需固守常规。
++ 让我们从operator new开始。实现一致性operator new必得返回正确的值，内存不足时必得调
+  用new-handling函数(见条款49)，必须有对付零内存需求的准备，还需避免不慎掩盖正常形式的
+  new一虽然这比较偏近class的接口要求而非实现要求。
++ operator new实际上不只一次尝试分配内存，并在每次失败后调用new-handling函数。这里假
+  设new-handling函数也许能够做某些动作将某些内存释放出来。只有当指向new-handling函数的
+  指针是null，operator new才会抛出异常。
++ 下面是一个operator new的伪代码
+   ```
+   void* operator new(std::size_t size) throw(std::bad_alloc){
+     using namespace std;
+     if(size==0){
+       size=1;// 处理0byte申请，将他看为1byte申请
+     }
+     while(true){
+       尝试分配 size bytes;
+       if(分配成功)
+           return (指针，指向分配的内存)
+       //分配失败
+       new_handler globalHandler=set_new_handler(0);
+       set_new_handler(globalHandler);
+
+       if(globalHandler)
+           (*globalHandler)();
+       else
+           throw std::bad_alloc();
+      }
+   }
+   ```
+   其中将new-handling函数指针设为null而后又立刻恢复原样。那是因为我们很不幸地没有任何
+   办法可以直接取得new-handling函数指针，所以必须调用set new handler找出它来。若在多线
+   程环境中你或许需要某种机锁(lock)以便安全处置new-handling函数背后的(global)数据结构。
+   上面的while是个无穷循环，只有内存被成功分配或者new-handling函数做了item49中所描述的
+   正确的事情，才会退出。
++ 如果Base class专属的operator new并非被设计用来对付上述情况(即派生类)(实际上往往如此)
+  ，处理此情势的最佳做法是将"内存申请量错误"的调用行为改来标准operator new。
++ 如果你决定写个operator new[]，记住，唯一需要做的一件事就是分配一块未加工内存(raw memory)，
+  因为你无法对array之内迄今尚未存在的元素对象做任何事情。实际上你甚至无法计算这个array
+  将含多少个元素对象。因此，你不能在Base::operator new []内假设array的每个元素对象的大
+  小是sizeof(Base)，这也就意味你不能假设array的元素对象个数是(bytes申请数)/sizeof(Bas
+  e)。此外，传递给operator new[]的size_t参数，其值有可能比 "将被填以对象"的内存数量更
+  多，因为条款16说过，动态分配的arrays可能包含额外空间用来存放元素个数。
++ operator delete情况更简单，你需要记住的唯一事情就是C++保证"删除null指针永远安全"，所
+  以你必须兑现这项保证。
+  ```
+  void operator delete(void* rawMemory) throw(){
+    if(rawMemory == 0) return;//如果被删除的是个null指针，那就什么都不做，直接返回
+
+    归还rawMemry所指的内存;
+  }
+  ```
+  如果即将被删除的对象派生自某个base class而后者欠缺virtual析构函数，那么C++传给opera
+  tor delete的size_t数值可能不正确。所以基类一定得定义一个virtual析构函数。
++ 所以
+  1. operator new应该内含一个无穷循环，并在其中尝试分配内存，如果它无法满足内存需求，
+  就该调用new-handler。它也应该有能力处理0bytes申请。Class专属版本则还应该处理"比正确
+  大小更大的(错误)申请"。
+  2. operator delete应该在收到null指针时不做任何事。Class专属版本则还应该处理"比正确
+  大小更大的(错误)申请"。
+## item52 Write placement delete if you write placement new
++ 写了placementnew也要写placementdelete。
++ placementdelete只有在"伴随placementnew调用而触发的构造函数"出现异常时才会被调用。
++ 所以
+  1. 当你写一个placement operator new，请确定也写出了对应的placement operator delete。
+  如果没有这样做，你的程序可能会发生隐微而时断时续的内存泄漏。
+  2. 当你声明placementnew和placementdelete，请确定不要无意识(非故意)地遮掩了它们的正
+  常版本。
+
+
+# 杂项讨论
+## Pay attention to compiler warnings
++ 不要轻忽编译器的警告。
+  ```
+  class B{
+    public:
+       virtual void f() const;
+  };
+
+  class D:public B{
+    public:
+       virtual void f();
+  };
+  ```
+  B中的f是个canst成员函数，而在D中它未被声明为const。编译器会给出警告
+  warning: D::f() hides virtual B::f()
+  这个编译器试图告诉你声明于B中的f并未在D中被重新声明，而是被整个遮掩。
++ 所以
+  1. 严肃对待编译器发出的警告信息。努力在你的编译器的最高(最严苛)警告级别下争取"无任何
+  警告"的荣誉。
+  2. 不要过度倚赖编译器的报警能力，因为不同的编译器对待事情的态度并不相同。一旦移植到另
+  一个编译器上，你原本倚赖的警告信息有可能消失。
+## Familiarize youself with the standard library,include tr1
++ 让自己熟悉包括TRl在内的标准程程序库。
++ TRI代表"Technical Report I"，那是C++程序库工作小组对该份文档的称呼。
++ 所以
+  1. C++标准程序库的主要机能由STL、iostreams、locales组成。并包含C99标准程序库。
+  2. TRl添加了智能指针(例如trl::shared ptr) 、一般化函数指针(trl::function)、hash-ba
+  sed容器、正则表达式(regular expressions)以及另外10个组件的支持。
+  3. TRl自身只是一份规范。为获得TRl提供的好处，你需要一份实物。一个好的实物来源是Boost。
+## Familiarize youself with Boost
++ 让自己熟悉Boost。
++ 所以
+  1. Boost是一个社群，也是一个网站。致力于免费、源码开放、同僚复审的C++程序库开发。Boo
+  st在 C++标准化过程中扮演深具影响力的角色。
+  2. Boost提供许多TRl组件实现品，以及其他许多程序库。
